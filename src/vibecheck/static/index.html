@@ -1,0 +1,841 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VibeCheck — вайб проверяется тут</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bagel+Fat+One&family=Funnel+Sans:wght@300..800&family=Caprasimo&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --cream: #fef3e2;
+    --paper: #fffaf0;
+    --ink: #1a1410;
+    --ink2: #5a4a3a;
+    --coral: #ff5c8a;
+    --violet: #7c4dff;
+    --cyan: #22d3ee;
+    --yellow: #fbbf24;
+    --mint: #10b981;
+    --danger: #ef4444;
+    --shadow: 4px 4px 0 var(--ink);
+    --shadow-lg: 8px 8px 0 var(--ink);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { background: var(--cream); color: var(--ink); font-family: 'Funnel Sans', sans-serif; min-height: 100vh; overflow-x: hidden; }
+  body::before {
+    content: ''; position: fixed; inset: 0; pointer-events: none; z-index: 0;
+    background-image:
+      radial-gradient(circle at 12% 18%, rgba(255,92,138,0.12) 0, transparent 22%),
+      radial-gradient(circle at 88% 28%, rgba(124,77,255,0.12) 0, transparent 22%),
+      radial-gradient(circle at 20% 82%, rgba(34,211,238,0.10) 0, transparent 22%),
+      radial-gradient(circle at 80% 88%, rgba(251,191,36,0.10) 0, transparent 22%);
+  }
+  body::after {
+    content: ''; position: fixed; inset: 0; pointer-events: none; z-index: 0;
+    background-image:
+      radial-gradient(circle at 25% 35%, rgba(26,20,16,0.06) 1px, transparent 1px),
+      radial-gradient(circle at 75% 65%, rgba(26,20,16,0.06) 1px, transparent 1px);
+    background-size: 8px 8px, 12px 12px;
+    opacity: 0.5;
+  }
+  .container { max-width: 1100px; margin: 0 auto; padding: 32px 24px 80px; position: relative; z-index: 1; }
+
+  /* HEADER */
+  header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 48px; }
+  .logo-wrap { display: flex; align-items: center; gap: 12px; }
+  .logo-mark {
+    width: 52px; height: 52px; background: var(--coral);
+    border: 3px solid var(--ink); box-shadow: var(--shadow);
+    display: grid; place-items: center; transform: rotate(-5deg);
+    font-family: 'Bagel Fat One'; font-size: 28px; color: var(--ink);
+  }
+  .logo-text { font-family: 'Bagel Fat One'; font-size: 24px; letter-spacing: -0.02em; }
+  .badge-beta {
+    background: var(--yellow); border: 2px solid var(--ink); padding: 6px 12px;
+    font-weight: 800; font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase;
+    transform: rotate(3deg); box-shadow: 3px 3px 0 var(--ink);
+  }
+
+  /* HERO */
+  .hero { display: grid; grid-template-columns: 1.1fr 0.9fr; gap: 32px; align-items: center; margin-bottom: 40px; }
+  @media (max-width: 860px) { .hero { grid-template-columns: 1fr; } }
+  h1 {
+    font-family: 'Bagel Fat One', cursive;
+    font-weight: 400;
+    font-size: clamp(3rem, 9vw, 6.5rem);
+    line-height: 0.92; letter-spacing: -0.02em;
+  }
+  h1 .pop-coral { color: var(--coral); display: inline-block; transform: rotate(-3deg); }
+  h1 .pop-violet { color: var(--violet); display: inline-block; transform: rotate(2deg); }
+  h1 .pop-cyan { color: var(--cyan); display: inline-block; }
+  h1 .underline { text-decoration: underline wavy var(--yellow); text-decoration-thickness: 4px; text-underline-offset: 8px; }
+  .lead {
+    font-size: 18px; line-height: 1.55; color: var(--ink2); max-width: 520px;
+    margin-top: 20px; font-weight: 500;
+  }
+  .hero-char { display: grid; place-items: center; position: relative; min-height: 280px; }
+
+  /* SCROLLING STRIP */
+  .strip {
+    background: var(--ink); color: var(--cream); padding: 14px 0;
+    border: 3px solid var(--ink); transform: rotate(-1deg);
+    margin: 40px -48px; overflow: hidden; white-space: nowrap;
+    box-shadow: var(--shadow);
+  }
+  .strip-inner { display: inline-block; animation: scroll 24s linear infinite; font-family: 'Bagel Fat One'; font-size: 18px; letter-spacing: 0.02em; }
+  .strip-inner span { margin: 0 24px; }
+  .strip-inner .dot { color: var(--coral); }
+  @keyframes scroll { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
+
+  /* MODE CARDS */
+  .modes {
+    display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; margin-bottom: 32px;
+  }
+  @media (max-width: 720px) { .modes { grid-template-columns: 1fr; } }
+  .mode-btn {
+    background: var(--paper); border: 3px solid var(--ink); padding: 20px;
+    box-shadow: var(--shadow); cursor: pointer; text-align: left;
+    font-family: inherit; color: var(--ink);
+    transition: transform 0.15s, box-shadow 0.15s, background 0.15s;
+    display: flex; flex-direction: column; gap: 8px;
+    position: relative;
+  }
+  .mode-btn:hover { transform: translate(-2px, -2px); box-shadow: 6px 6px 0 var(--ink); }
+  .mode-btn.active { background: var(--yellow); }
+  .mode-btn:nth-child(1).active { background: var(--cyan); }
+  .mode-btn:nth-child(2).active { background: var(--coral); color: var(--paper); }
+  .mode-btn:nth-child(3).active { background: var(--violet); color: var(--paper); }
+  .mode-emoji { font-size: 28px; line-height: 1; }
+  .mode-title { font-family: 'Bagel Fat One'; font-size: 20px; letter-spacing: -0.01em; }
+  .mode-desc { font-size: 13px; font-weight: 500; line-height: 1.4; opacity: 0.85; }
+
+  /* FORM */
+  .form-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px; margin-bottom: 24px;
+  }
+  @media (max-width: 1000px) { .form-grid { grid-template-columns: 1fr 1fr; } }
+  @media (max-width: 520px) { .form-grid { grid-template-columns: 1fr; } }
+  .form-section-label {
+    grid-column: 1 / -1; font-family: 'Bagel Fat One'; font-size: 14px;
+    letter-spacing: 0.1em; color: var(--ink2); margin-top: 8px;
+    display: flex; align-items: center; gap: 10px;
+  }
+  .form-section-label::after {
+    content: ''; flex: 1; height: 2px; background: var(--ink); opacity: 0.15;
+  }
+  .field {
+    background: var(--paper); border: 3px solid var(--ink); padding: 14px 16px;
+    box-shadow: var(--shadow);
+  }
+  .field label {
+    display: block; font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase;
+    font-weight: 800; color: var(--ink2); margin-bottom: 6px;
+  }
+  .field input {
+    width: 100%; border: none; outline: none; background: transparent;
+    font-family: inherit; font-size: 16px; color: var(--ink); font-weight: 600;
+  }
+  .field input::placeholder { color: var(--ink2); opacity: 0.5; font-weight: 500; }
+
+  details.ig-drop {
+    background: var(--paper); border: 3px dashed var(--ink); padding: 14px 18px;
+    margin-bottom: 20px;
+  }
+  details.ig-drop summary { cursor: pointer; font-weight: 700; font-size: 13px; letter-spacing: 0.05em; text-transform: uppercase; }
+  details.ig-drop > div { margin-top: 12px; font-size: 13px; line-height: 1.5; color: var(--ink2); }
+  details.ig-drop ol { margin: 8px 0 8px 22px; }
+  details.ig-drop code { background: var(--cream); padding: 2px 6px; border: 1px solid var(--ink); font-family: monospace; font-size: 12px; }
+  details.ig-drop .warn { color: var(--danger); font-weight: 700; display: inline-block; margin-top: 8px; }
+  details.ig-drop .field { margin-top: 12px; box-shadow: none; border-width: 2px; }
+
+  .btn-submit {
+    width: 100%; background: var(--ink); color: var(--yellow);
+    border: 3px solid var(--ink); padding: 22px;
+    font-family: 'Bagel Fat One'; font-size: 24px; letter-spacing: 0.02em;
+    cursor: pointer; box-shadow: var(--shadow-lg);
+    transition: transform 0.15s, box-shadow 0.15s, background 0.15s;
+    text-transform: uppercase;
+  }
+  .btn-submit:hover { transform: translate(-3px, -3px); box-shadow: 11px 11px 0 var(--ink); background: var(--coral); color: var(--ink); }
+  .btn-submit:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  /* PROGRESS */
+  .progress {
+    display: none; margin-top: 24px; padding: 20px;
+    background: var(--paper); border: 3px solid var(--ink); box-shadow: var(--shadow);
+  }
+  .progress.on { display: block; }
+  .progress .stage { font-family: 'Bagel Fat One'; font-size: 14px; letter-spacing: 0.1em; color: var(--coral); margin-bottom: 6px; }
+  .progress .msg { font-size: 16px; font-weight: 600; margin-bottom: 14px; }
+  .progress-bar-outer { height: 12px; background: var(--cream); border: 2px solid var(--ink); overflow: hidden; position: relative; }
+  .progress-bar-outer::after {
+    content: ''; position: absolute; inset: 0;
+    background-image: repeating-linear-gradient(45deg, transparent 0 6px, rgba(26,20,16,0.1) 6px 8px);
+  }
+  .progress-fill { height: 100%; background: var(--coral); transition: width 0.5s; position: relative; z-index: 1; }
+
+  .error { display: none; margin-top: 16px; padding: 16px; border: 3px solid var(--danger); background: #ffe8e8; font-weight: 700; }
+  .error.on { display: block; }
+
+  /* REPORT */
+  .report { display: none; margin-top: 64px; }
+  .report.on { display: block; animation: slide-up 0.6s ease-out both; }
+  @keyframes slide-up { from { opacity: 0; transform: translateY(40px); } to { opacity: 1; transform: none; } }
+
+  .report-top { display: grid; grid-template-columns: 320px 1fr; gap: 32px; align-items: center; margin-bottom: 40px; }
+  @media (max-width: 720px) { .report-top { grid-template-columns: 1fr; } }
+  .avatar-frame {
+    background: var(--paper); border: 3px solid var(--ink); padding: 24px;
+    box-shadow: var(--shadow-lg); position: relative; display: grid; place-items: center;
+    min-height: 300px;
+  }
+  .avatar-frame::before {
+    content: ''; position: absolute; inset: 8px;
+    border: 2px dashed var(--ink); pointer-events: none; opacity: 0.3;
+  }
+  .score-wrap { display: flex; flex-direction: column; gap: 14px; }
+  .score-label { font-family: 'Bagel Fat One'; font-size: 16px; letter-spacing: 0.08em; color: var(--violet); }
+  .score-main {
+    font-family: 'Bagel Fat One'; font-size: clamp(6rem, 14vw, 10rem);
+    line-height: 0.9; letter-spacing: -0.04em;
+  }
+  .score-hundred { font-family: 'Bagel Fat One'; font-size: 36px; color: var(--ink2); }
+  .score-emoji { font-size: 48px; display: inline-block; animation: wobble 3s ease-in-out infinite; }
+  @keyframes wobble { 0%, 100% { transform: rotate(-4deg); } 50% { transform: rotate(4deg); } }
+  .headline-card {
+    background: var(--paper); border: 3px solid var(--ink); padding: 20px 24px;
+    box-shadow: var(--shadow); font-family: 'Caprasimo', serif;
+    font-size: clamp(20px, 2.4vw, 28px); line-height: 1.3;
+    transform: rotate(-0.5deg);
+  }
+
+  /* STICKER CARDS */
+  .sticker-grid { display: grid; grid-template-columns: repeat(12, 1fr); gap: 20px; }
+  .card {
+    background: var(--paper); border: 3px solid var(--ink); padding: 20px;
+    box-shadow: var(--shadow);
+  }
+  .card-title {
+    font-family: 'Bagel Fat One'; font-size: 18px; letter-spacing: 0.02em;
+    margin-bottom: 14px; display: inline-block; padding: 4px 10px;
+    background: var(--ink); color: var(--paper);
+  }
+  .card.interests { grid-column: span 12; background: linear-gradient(to bottom right, var(--paper), #fff0f5); }
+  .card.interests .card-title { background: var(--coral); }
+  .card.traits { grid-column: span 7; transform: rotate(-0.3deg); }
+  .card.traits .card-title { background: var(--violet); color: var(--paper); }
+  .card.redflags { grid-column: span 5; background: #fff1ec; }
+  .card.redflags .card-title { background: var(--danger); color: var(--paper); }
+  .card.greenflags { grid-column: span 5; background: #e8faf3; transform: rotate(0.3deg); }
+  .card.greenflags .card-title { background: var(--mint); color: var(--paper); }
+  .card.summary { grid-column: span 7; background: var(--yellow); }
+  .card.summary .card-title { background: var(--ink); color: var(--yellow); }
+  @media (max-width: 860px) {
+    .card.traits, .card.redflags, .card.greenflags, .card.summary { grid-column: span 12; }
+  }
+
+  .chips { display: flex; flex-wrap: wrap; gap: 10px; }
+  .chip {
+    padding: 8px 14px; background: var(--paper); border: 2px solid var(--ink);
+    font-weight: 700; font-size: 14px;
+    box-shadow: 2px 2px 0 var(--ink);
+  }
+  .chip:nth-child(3n) { background: var(--cyan); }
+  .chip:nth-child(3n+1) { background: var(--yellow); }
+  .chip:nth-child(3n+2) { background: #ffe0ec; }
+
+  .trait { padding: 12px 0; border-bottom: 2px dashed var(--ink); }
+  .trait:last-child { border-bottom: none; }
+  .trait-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; }
+  .trait-name { font-weight: 800; font-size: 16px; }
+  .trait-strength { display: flex; gap: 3px; }
+  .trait-dot { width: 12px; height: 12px; background: var(--cream); border: 2px solid var(--ink); }
+  .trait-dot.on { background: var(--violet); }
+  .trait-evidence { font-size: 13px; color: var(--ink2); line-height: 1.5; }
+
+  .flag { padding: 10px 14px; margin-bottom: 10px; background: var(--paper); border: 2px solid var(--ink); box-shadow: 2px 2px 0 var(--ink); }
+  .flag:last-child { margin-bottom: 0; }
+  .flag-cat { font-weight: 800; font-size: 12px; letter-spacing: 0.05em; text-transform: uppercase; margin-bottom: 4px; }
+  .flag.red .flag-cat { color: var(--danger); }
+  .flag.green .flag-cat { color: var(--mint); }
+  .flag-desc { font-size: 13px; color: var(--ink2); line-height: 1.4; }
+
+  .summary-text { font-family: 'Caprasimo', serif; font-size: 16px; line-height: 1.65; white-space: pre-wrap; }
+
+  footer { margin-top: 80px; padding: 20px 0; border-top: 3px solid var(--ink); text-align: center; font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; font-weight: 700; color: var(--ink2); }
+
+  /* CHARACTER SVG */
+  .char-svg { width: 280px; height: 280px; overflow: visible; }
+  .char-svg .bounce { animation: float 4s ease-in-out infinite; transform-origin: center; }
+  @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
+  .char-svg .blink { animation: blink 5s infinite; transform-origin: center; transform-box: fill-box; }
+  @keyframes blink { 0%, 92%, 100% { transform: scaleY(1); } 95%, 97% { transform: scaleY(0.1); } }
+
+  .confetti {
+    position: fixed; width: 10px; height: 14px; top: -20px;
+    pointer-events: none; z-index: 100;
+    animation: fall 3s linear forwards;
+  }
+  @keyframes fall {
+    to { transform: translateY(100vh) rotate(720deg); opacity: 0; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <div class="logo-wrap">
+      <div class="logo-mark">V</div>
+      <div class="logo-text">VibeCheck</div>
+    </div>
+    <div class="badge-beta">V 0.2 · BETA</div>
+  </header>
+
+  <section class="hero">
+    <div>
+      <h1 id="hero-title">
+        <span class="pop-coral">ПРОВЕРЬ</span><br>
+        <span class="pop-violet underline">ВАЙБ</span><br>
+        <span class="pop-cyan">ЧЕЛОВЕКА.</span>
+      </h1>
+      <p class="lead" id="hero-lead">Reddit, GitHub, Instagram → AI склепает из тебя (или из него) мультяшного человечка, выдаст score и разложит по полочкам.</p>
+    </div>
+    <div class="hero-char">
+      <svg class="char-svg" viewBox="-100 -100 300 300">
+        <g class="bounce">
+          <!-- default hero character -->
+          <circle cx="50" cy="40" r="70" fill="#fbbf24" stroke="#1a1410" stroke-width="4"/>
+          <!-- blushed cheeks -->
+          <circle cx="15" cy="55" r="8" fill="#ff8fb3" opacity="0.7"/>
+          <circle cx="85" cy="55" r="8" fill="#ff8fb3" opacity="0.7"/>
+          <!-- eyes -->
+          <g class="blink">
+            <circle cx="25" cy="35" r="6" fill="#1a1410"/>
+            <circle cx="75" cy="35" r="6" fill="#1a1410"/>
+            <circle cx="27" cy="33" r="2" fill="#fff"/>
+            <circle cx="77" cy="33" r="2" fill="#fff"/>
+          </g>
+          <!-- mouth smile -->
+          <path d="M 30 60 Q 50 80 70 60" fill="none" stroke="#1a1410" stroke-width="4" stroke-linecap="round"/>
+          <!-- hair tuft -->
+          <path d="M 20 -20 Q 30 -40 50 -30 Q 70 -40 80 -20 Q 60 -10 50 -15 Q 40 -10 20 -20 Z" fill="#1a1410"/>
+          <!-- sparkles -->
+          <text x="-40" y="0" font-size="28">✨</text>
+          <text x="130" y="30" font-size="24">⚡</text>
+          <text x="120" y="140" font-size="28">🌟</text>
+        </g>
+      </svg>
+    </div>
+  </section>
+
+  <div class="strip">
+    <div class="strip-inner">
+      <span>REDDIT <span class="dot">●</span></span><span>GITHUB <span class="dot">●</span></span><span>INSTAGRAM <span class="dot">●</span></span><span>AI-АНАЛИЗ <span class="dot">●</span></span><span>ЧЕЛОВЕЧЕК <span class="dot">●</span></span><span>ВАЙБ SCORE <span class="dot">●</span></span>
+      <span>REDDIT <span class="dot">●</span></span><span>GITHUB <span class="dot">●</span></span><span>INSTAGRAM <span class="dot">●</span></span><span>AI-АНАЛИЗ <span class="dot">●</span></span><span>ЧЕЛОВЕЧЕК <span class="dot">●</span></span><span>ВАЙБ SCORE <span class="dot">●</span></span>
+    </div>
+  </div>
+
+  <div class="modes">
+    <button type="button" class="mode-btn active" data-mode="vibe">
+      <div class="mode-emoji">🌈</div>
+      <div class="mode-title">Vibe-check</div>
+      <div class="mode-desc">Общий портрет. Интересы, характер, флаги.</div>
+    </button>
+    <button type="button" class="mode-btn" data-mode="self">
+      <div class="mode-emoji">🪞</div>
+      <div class="mode-title">Аудит себя</div>
+      <div class="mode-desc">Как тебя видят HR, свидания, клиенты.</div>
+    </button>
+    <button type="button" class="mode-btn" data-mode="catfish">
+      <div class="mode-emoji">🎣</div>
+      <div class="mode-title">Catfish-детектор</div>
+      <div class="mode-desc">Реальный или фейк, бот, скам.</div>
+    </button>
+  </div>
+
+  <form id="form">
+    <div class="form-grid">
+      <div class="form-section-label">🌐 Глобальные</div>
+      <div class="field">
+        <label>Reddit</label>
+        <input name="reddit" placeholder="u/spez" autocomplete="off">
+      </div>
+      <div class="field">
+        <label>GitHub</label>
+        <input name="github" placeholder="torvalds" autocomplete="off">
+      </div>
+      <div class="field">
+        <label>Instagram</label>
+        <input name="instagram" placeholder="@nasa" autocomplete="off">
+      </div>
+      <div class="field">
+        <label>Bluesky</label>
+        <input name="bluesky" placeholder="jay.bsky.team" autocomplete="off">
+      </div>
+      <div class="field">
+        <label>HackerNews</label>
+        <input name="hackernews" placeholder="pg" autocomplete="off">
+      </div>
+      <div class="field">
+        <label>Mastodon</label>
+        <input name="mastodon" placeholder="user@mastodon.social" autocomplete="off">
+      </div>
+      <div class="field">
+        <label>Dev.to</label>
+        <input name="devto" placeholder="ben" autocomplete="off">
+      </div>
+      <div class="field">
+        <label>Substack</label>
+        <input name="substack" placeholder="platformer" autocomplete="off">
+      </div>
+      <div class="field">
+        <label>Steam</label>
+        <input name="steam" placeholder="gabelogannewell" autocomplete="off">
+      </div>
+      <div class="form-section-label">🇷🇺 Русские</div>
+      <div class="field">
+        <label>Habr</label>
+        <input name="habr" placeholder="alizar" autocomplete="off">
+      </div>
+      <div class="field">
+        <label>Telegram-канал</label>
+        <input name="telegram" placeholder="durov" autocomplete="off">
+      </div>
+      <div class="field">
+        <label>Letterboxd</label>
+        <input name="letterboxd" placeholder="davidehrlich" autocomplete="off">
+      </div>
+      <div class="field">
+        <label>Goodreads (user ID)</label>
+        <input name="goodreads" placeholder="12345" autocomplete="off">
+      </div>
+      <div class="field">
+        <label>Pikabu</label>
+        <input name="pikabu" placeholder="Zergeich" autocomplete="off">
+      </div>
+    </div>
+
+    <details class="ig-drop">
+      <summary>🔐 IG SESSION (для приватных профилей) — опционально</summary>
+      <div>
+        Если надо проверить <b>приватный</b> профиль на который <b>ты подписан</b> — вставь свой <code>sessionid</code> cookie.
+        <ol>
+          <li>Зайди на <a href="https://www.instagram.com" target="_blank">instagram.com</a> (залогинься)</li>
+          <li>F12 → Application → Cookies → instagram.com</li>
+          <li>Найди <code>sessionid</code> → скопируй значение</li>
+          <li>Вставь ниже</li>
+        </ol>
+        <div class="warn">⚠️ Cookie используется один раз, не сохраняется. Но — это твой доступ к IG, не делись с кем попало.</div>
+        <div class="field">
+          <label>sessionid</label>
+          <input name="ig_session" type="password" placeholder="45221384%3AAbCdEfGh..." autocomplete="off">
+        </div>
+      </div>
+    </details>
+
+    <button type="submit" class="btn-submit" id="submit">↳ Поехали</button>
+  </form>
+
+  <div class="progress" id="progress">
+    <div class="stage" id="stage">загружаем</div>
+    <div class="msg" id="msg">собираем вайб...</div>
+    <div class="progress-bar-outer"><div class="progress-fill" id="fill" style="width:0%"></div></div>
+  </div>
+  <div class="error" id="error"></div>
+
+  <section class="report" id="report">
+    <div class="report-top">
+      <div class="avatar-frame" id="avatar-frame"></div>
+      <div class="score-wrap">
+        <div class="score-label">✨ ВАЙБ-СКОР</div>
+        <div style="display:flex;align-items:baseline;gap:16px;flex-wrap:wrap">
+          <div class="score-main" id="score">0</div>
+          <div class="score-hundred">/ 100</div>
+          <div class="score-emoji" id="score-emoji">✨</div>
+        </div>
+        <div class="headline-card" id="headline"></div>
+      </div>
+    </div>
+
+    <div class="sticker-grid">
+      <div class="card interests">
+        <div class="card-title">🎯 Топ интересы</div>
+        <div class="chips" id="interests"></div>
+      </div>
+
+      <div class="card traits">
+        <div class="card-title">🧠 Черты характера</div>
+        <div id="traits"></div>
+      </div>
+
+      <div class="card redflags" id="redflags-section" style="display:none">
+        <div class="card-title">🚩 Красные флаги</div>
+        <div id="redflags"></div>
+      </div>
+
+      <div class="card greenflags" id="greenflags-section" style="display:none">
+        <div class="card-title">🌱 Зелёные флаги</div>
+        <div id="greenflags"></div>
+      </div>
+
+      <div class="card summary">
+        <div class="card-title">📝 Вердикт</div>
+        <div class="summary-text" id="summary"></div>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    VibeCheck · 2026 · Stateless · Public data only
+  </footer>
+</div>
+
+<script>
+/* ============ CHARACTER BUILDER ============ */
+const MOOD_EYES = {
+  joyful:     '<path d="M 18 35 Q 25 28 32 35" fill="none" stroke="#1a1410" stroke-width="4" stroke-linecap="round"/><path d="M 68 35 Q 75 28 82 35" fill="none" stroke="#1a1410" stroke-width="4" stroke-linecap="round"/>',
+  chill:      '<path d="M 18 35 L 32 35" stroke="#1a1410" stroke-width="4" stroke-linecap="round"/><path d="M 68 35 L 82 35" stroke="#1a1410" stroke-width="4" stroke-linecap="round"/>',
+  curious:    '<circle cx="25" cy="35" r="7" fill="#1a1410"/><circle cx="75" cy="35" r="7" fill="#1a1410"/><circle cx="28" cy="32" r="2.5" fill="#fff"/><circle cx="78" cy="32" r="2.5" fill="#fff"/><path d="M 16 22 L 34 26" stroke="#1a1410" stroke-width="3" stroke-linecap="round"/><path d="M 66 26 L 84 22" stroke="#1a1410" stroke-width="3" stroke-linecap="round"/>',
+  focused:    '<path d="M 16 36 Q 25 33 34 36" fill="none" stroke="#1a1410" stroke-width="4" stroke-linecap="round"/><path d="M 66 36 Q 75 33 84 36" fill="none" stroke="#1a1410" stroke-width="4" stroke-linecap="round"/>',
+  shy:        '<circle cx="25" cy="36" r="4" fill="#1a1410"/><circle cx="75" cy="36" r="4" fill="#1a1410"/>',
+  sad:        '<path d="M 16 34 Q 25 40 34 34" fill="none" stroke="#1a1410" stroke-width="4" stroke-linecap="round"/><path d="M 66 34 Q 75 40 84 34" fill="none" stroke="#1a1410" stroke-width="4" stroke-linecap="round"/>',
+  angry:      '<path d="M 14 28 L 34 36" stroke="#1a1410" stroke-width="4" stroke-linecap="round"/><path d="M 66 36 L 86 28" stroke="#1a1410" stroke-width="4" stroke-linecap="round"/><circle cx="25" cy="38" r="3" fill="#1a1410"/><circle cx="75" cy="38" r="3" fill="#1a1410"/>',
+  suspicious: '<path d="M 16 36 L 34 36" stroke="#1a1410" stroke-width="4" stroke-linecap="round"/><path d="M 66 36 L 84 36" stroke="#1a1410" stroke-width="4" stroke-linecap="round"/><circle cx="25" cy="36" r="3" fill="#1a1410"/><circle cx="75" cy="36" r="3" fill="#1a1410"/>',
+};
+
+const MOOD_MOUTH = {
+  joyful:     '<path d="M 28 60 Q 50 82 72 60" fill="#ff5c8a" stroke="#1a1410" stroke-width="4" stroke-linejoin="round"/><path d="M 28 60 Q 50 82 72 60" fill="none" stroke="#1a1410" stroke-width="4"/>',
+  chill:      '<path d="M 32 65 Q 50 72 68 65" fill="none" stroke="#1a1410" stroke-width="4" stroke-linecap="round"/>',
+  curious:    '<ellipse cx="50" cy="65" rx="6" ry="5" fill="#ff5c8a" stroke="#1a1410" stroke-width="3"/>',
+  focused:    '<path d="M 38 65 L 62 65" stroke="#1a1410" stroke-width="4" stroke-linecap="round"/>',
+  shy:        '<path d="M 40 65 Q 50 68 60 65" fill="none" stroke="#1a1410" stroke-width="3" stroke-linecap="round"/>',
+  sad:        '<path d="M 30 72 Q 50 58 70 72" fill="none" stroke="#1a1410" stroke-width="4" stroke-linecap="round"/>',
+  angry:      '<path d="M 32 70 Q 40 62 50 68 Q 60 62 68 70" fill="none" stroke="#1a1410" stroke-width="4" stroke-linejoin="round"/>',
+  suspicious: '<path d="M 36 68 Q 45 64 55 68 Q 62 64 66 68" fill="none" stroke="#1a1410" stroke-width="3"/>',
+};
+
+const HAIR = {
+  boy:     '<path d="M -20 0 Q -10 -55 30 -45 Q 50 -60 80 -45 Q 115 -55 120 5 Q 100 -20 75 -20 Q 50 -25 25 -18 Q 0 -15 -20 0 Z" fill="var(--hair)" stroke="#1a1410" stroke-width="4" stroke-linejoin="round"/>',
+  girl:    '<path d="M -30 50 Q -35 -10 0 -50 Q 25 -65 50 -58 Q 75 -65 100 -50 Q 135 -10 130 55 Q 120 20 105 15 L 110 80 Q 100 90 95 80 L 95 25 Q 85 20 75 22 Q 50 15 25 22 Q 15 20 5 25 L 5 80 Q 0 90 -10 80 L -5 15 Q -20 20 -30 50 Z" fill="var(--hair)" stroke="#1a1410" stroke-width="4" stroke-linejoin="round"/><circle cx="100" cy="-30" r="10" fill="#ff5c8a" stroke="#1a1410" stroke-width="3"/><circle cx="100" cy="-30" r="4" fill="#fff"/>',
+  neutral: '<path d="M -15 -5 Q -10 -50 25 -50 Q 40 -65 60 -55 Q 80 -65 95 -50 Q 115 -45 115 0 Q 95 -15 70 -18 Q 50 -22 30 -18 Q 5 -15 -15 -5 Z" fill="var(--hair)" stroke="#1a1410" stroke-width="4" stroke-linejoin="round"/>',
+};
+
+const ACCESSORIES = {
+  glasses:    '<g transform="translate(0,-2)"><circle cx="25" cy="36" r="13" fill="none" stroke="#1a1410" stroke-width="4"/><circle cx="75" cy="36" r="13" fill="none" stroke="#1a1410" stroke-width="4"/><path d="M 38 36 L 62 36" stroke="#1a1410" stroke-width="4"/></g>',
+  shades:     '<g><rect x="12" y="28" width="26" height="16" rx="3" fill="#1a1410"/><rect x="62" y="28" width="26" height="16" rx="3" fill="#1a1410"/><path d="M 38 36 L 62 36" stroke="#1a1410" stroke-width="4"/><path d="M 16 32 L 22 34" stroke="#fff" stroke-width="2"/><path d="M 66 32 L 72 34" stroke="#fff" stroke-width="2"/></g>',
+  headphones: '<path d="M -15 10 Q -20 -40 50 -48 Q 120 -40 115 10" fill="none" stroke="#1a1410" stroke-width="5" stroke-linecap="round"/><rect x="-25" y="5" width="22" height="32" rx="6" fill="#7c4dff" stroke="#1a1410" stroke-width="4"/><rect x="103" y="5" width="22" height="32" rx="6" fill="#7c4dff" stroke="#1a1410" stroke-width="4"/>',
+  cap:        '<path d="M -10 -10 L 110 -10 Q 120 -20 115 -30 Q 100 -55 50 -55 Q 0 -55 -15 -30 Q -20 -20 -10 -10 Z" fill="#22d3ee" stroke="#1a1410" stroke-width="4" stroke-linejoin="round"/><path d="M -10 -10 L 140 -10 Q 145 -5 140 0 L -10 0 Z" fill="#22d3ee" stroke="#1a1410" stroke-width="4"/>',
+  beanie:     '<path d="M -15 -5 Q -15 -65 50 -65 Q 115 -65 115 -5 Q 95 -15 50 -15 Q 5 -15 -15 -5 Z" fill="#ef4444" stroke="#1a1410" stroke-width="4" stroke-linejoin="round"/><circle cx="50" cy="-70" r="10" fill="#fff" stroke="#1a1410" stroke-width="3"/>',
+  crown:      '<path d="M 0 -35 L 15 -10 L 30 -45 L 50 -15 L 70 -45 L 85 -10 L 100 -35 L 95 -5 L 5 -5 Z" fill="#fbbf24" stroke="#1a1410" stroke-width="4" stroke-linejoin="round"/><circle cx="30" cy="-30" r="4" fill="#ff5c8a" stroke="#1a1410" stroke-width="2"/><circle cx="50" cy="-30" r="4" fill="#22d3ee" stroke="#1a1410" stroke-width="2"/><circle cx="70" cy="-30" r="4" fill="#7c4dff" stroke="#1a1410" stroke-width="2"/>',
+  flowers:    '<g><circle cx="10" cy="-30" r="8" fill="#ff5c8a" stroke="#1a1410" stroke-width="3"/><circle cx="10" cy="-30" r="3" fill="#fbbf24"/><circle cx="85" cy="-25" r="10" fill="#fbbf24" stroke="#1a1410" stroke-width="3"/><circle cx="85" cy="-25" r="3" fill="#ff5c8a"/></g>',
+  laptop:     '<g transform="translate(10,100)"><rect x="0" y="0" width="80" height="50" fill="#e5e5e5" stroke="#1a1410" stroke-width="3"/><rect x="4" y="4" width="72" height="40" fill="#7c4dff"/><text x="40" y="30" font-size="16" text-anchor="middle" fill="#fff" font-family="monospace">{/}</text><rect x="-8" y="50" width="96" height="6" fill="#1a1410"/></g>',
+  gamepad:    '<g transform="translate(10,110)"><path d="M 0 10 Q 0 0 10 0 L 70 0 Q 80 0 80 10 L 80 25 Q 80 35 70 35 L 55 35 L 40 45 L 25 35 L 10 35 Q 0 35 0 25 Z" fill="#1a1410" stroke="#1a1410" stroke-width="3"/><circle cx="20" cy="17" r="4" fill="#22d3ee"/><circle cx="60" cy="12" r="3" fill="#ff5c8a"/><circle cx="66" cy="20" r="3" fill="#fbbf24"/></g>',
+  camera:     '<g transform="translate(20,100)"><rect x="0" y="0" width="60" height="40" rx="4" fill="#1a1410"/><circle cx="30" cy="20" r="12" fill="#22d3ee" stroke="#1a1410" stroke-width="3"/><circle cx="30" cy="20" r="6" fill="#1a1410"/><rect x="42" y="4" width="10" height="4" fill="#ff5c8a"/></g>',
+  paintbrush: '<g transform="translate(75,95) rotate(35)"><rect x="0" y="0" width="8" height="40" fill="#7c4dff" stroke="#1a1410" stroke-width="2"/><rect x="-2" y="40" width="12" height="8" fill="#fbbf24" stroke="#1a1410" stroke-width="2"/><path d="M -2 48 L 10 48 L 6 62 L 2 62 Z" fill="#ff5c8a" stroke="#1a1410" stroke-width="2"/></g>',
+  mic:        '<g transform="translate(40,95)"><rect x="0" y="0" width="20" height="30" rx="10" fill="#1a1410"/><path d="M -6 30 Q -6 45 10 45 Q 26 45 26 30" fill="none" stroke="#1a1410" stroke-width="3"/><rect x="8" y="45" width="4" height="12" fill="#1a1410"/></g>',
+  book:       '<g transform="translate(15,105)"><rect x="0" y="0" width="70" height="45" fill="#ef4444" stroke="#1a1410" stroke-width="3"/><path d="M 35 0 L 35 45" stroke="#1a1410" stroke-width="2"/><path d="M 8 8 L 28 8 M 8 14 L 28 14 M 42 8 L 62 8 M 42 14 L 62 14" stroke="#fff" stroke-width="1"/></g>',
+  mask:       '<g><path d="M 5 30 Q 0 50 25 55 Q 50 60 75 55 Q 100 50 95 30 Q 80 20 50 22 Q 20 20 5 30 Z" fill="#ef4444" stroke="#1a1410" stroke-width="3" opacity="0.9"/><ellipse cx="25" cy="40" rx="8" ry="4" fill="#1a1410"/><ellipse cx="75" cy="40" rx="8" ry="4" fill="#1a1410"/></g>',
+  hoodie:     '<path d="M -30 70 Q -40 100 -10 120 L 110 120 Q 140 100 130 70 Q 130 40 100 30 Q 50 20 0 30 Q -30 40 -30 70 Z" fill="#7c4dff" stroke="#1a1410" stroke-width="4"/>',
+  earring:    '<g><circle cx="-5" cy="55" r="5" fill="#fbbf24" stroke="#1a1410" stroke-width="2"/><circle cx="105" cy="55" r="5" fill="#fbbf24" stroke="#1a1410" stroke-width="2"/></g>',
+  piercing:   '<circle cx="50" cy="72" r="2.5" fill="#fbbf24" stroke="#1a1410" stroke-width="1.5"/>',
+  scarf:      '<path d="M -10 80 L 110 80 L 120 110 L 80 100 L 50 115 L 20 100 L -20 110 Z" fill="#ff5c8a" stroke="#1a1410" stroke-width="3" stroke-linejoin="round"/>',
+};
+
+const HAIR_COLORS = ['#1a1410', '#6b3e1f', '#a04025', '#2a1810', '#3b2a1a'];
+
+function buildCharacter(avatar) {
+  const skinColor = avatar.vibe_color || '#fbbf24';
+  const hairColor = HAIR_COLORS[Math.floor(Math.abs(hash(avatar.emoji || 'x')) % HAIR_COLORS.length)];
+  const hair = HAIR[avatar.gender] || HAIR.neutral;
+  const eyes = MOOD_EYES[avatar.mood] || MOOD_EYES.chill;
+  const mouth = MOOD_MOUTH[avatar.mood] || MOOD_MOUTH.chill;
+  const blushMoods = ['joyful', 'shy', 'chill'];
+  const blush = blushMoods.includes(avatar.mood) ? '<circle cx="12" cy="55" r="9" fill="#ff8fb3" opacity="0.7"/><circle cx="88" cy="55" r="9" fill="#ff8fb3" opacity="0.7"/>' : '';
+  const tear = avatar.mood === 'sad' ? '<path d="M 25 45 Q 23 55 25 60 Q 27 55 25 45 Z" fill="#22d3ee" stroke="#1a1410" stroke-width="1.5"/>' : '';
+
+  // Accessory layer ordering: background (hoodie, scarf), hair-level (cap, beanie, crown, flowers, headphones), face (glasses, shades, mask), floating (laptop, gamepad, camera, mic, book, paintbrush), tiny (earring, piercing)
+  const accList = (avatar.accessories || []).slice(0, 3);
+  const bgAcc = accList.filter(a => ['hoodie', 'scarf'].includes(a)).map(a => ACCESSORIES[a]).join('');
+  const hatOverlay = accList.find(a => ['cap', 'beanie', 'crown'].includes(a));
+  const hairLevel = accList.filter(a => ['flowers', 'headphones'].includes(a)).map(a => ACCESSORIES[a]).join('');
+  const faceAcc = accList.filter(a => ['glasses', 'shades', 'mask'].includes(a)).map(a => ACCESSORIES[a]).join('');
+  const floating = accList.filter(a => ['laptop', 'gamepad', 'camera', 'mic', 'book', 'paintbrush'].includes(a)).map(a => ACCESSORIES[a]).join('');
+  const tinyAcc = accList.filter(a => ['earring', 'piercing'].includes(a)).map(a => ACCESSORIES[a]).join('');
+
+  const baseHair = hatOverlay ? '' : hair;
+  const hatSvg = hatOverlay ? ACCESSORIES[hatOverlay] : '';
+
+  return `
+    <svg class="char-svg" viewBox="-60 -90 220 260" style="--hair:${hairColor}">
+      <!-- aura -->
+      <circle cx="50" cy="40" r="105" fill="${skinColor}" opacity="0.25"/>
+      <g class="bounce">
+        ${bgAcc}
+        <!-- head -->
+        <circle cx="50" cy="40" r="55" fill="${skinColor}" stroke="#1a1410" stroke-width="4"/>
+        ${baseHair}
+        ${hairLevel}
+        ${hatSvg}
+        ${blush}
+        <g class="blink">${eyes}</g>
+        ${mouth}
+        ${tear}
+        ${faceAcc}
+        ${tinyAcc}
+        ${floating}
+      </g>
+      ${sparkles(avatar)}
+    </svg>
+  `;
+}
+
+function sparkles(avatar) {
+  const good = ['joyful', 'chill', 'curious'].includes(avatar.mood);
+  if (good) return '<text x="-50" y="-20" font-size="24">✨</text><text x="120" y="10" font-size="22">⭐</text><text x="130" y="120" font-size="20">💫</text>';
+  if (avatar.mood === 'sad') return '<text x="-40" y="-20" font-size="24">☁️</text><text x="120" y="10" font-size="22">💧</text>';
+  if (avatar.mood === 'angry') return '<text x="-40" y="-20" font-size="24">💢</text><text x="120" y="10" font-size="22">🔥</text>';
+  if (avatar.mood === 'suspicious') return '<text x="-40" y="-20" font-size="24">❓</text><text x="120" y="10" font-size="22">🕵️</text>';
+  return '';
+}
+
+function hash(s) {
+  let h = 0;
+  for (let i = 0; i < s.length; i++) h = ((h << 5) - h) + s.charCodeAt(i);
+  return h;
+}
+
+function scoreEmoji(score) {
+  if (score >= 90) return '🔥';
+  if (score >= 75) return '✨';
+  if (score >= 60) return '😊';
+  if (score >= 40) return '😐';
+  if (score >= 20) return '😬';
+  return '🚨';
+}
+
+function confetti() {
+  const colors = ['#ff5c8a', '#7c4dff', '#22d3ee', '#fbbf24', '#10b981'];
+  for (let i = 0; i < 40; i++) {
+    const c = document.createElement('div');
+    c.className = 'confetti';
+    c.style.left = Math.random() * 100 + 'vw';
+    c.style.background = colors[i % colors.length];
+    c.style.animationDelay = (Math.random() * 0.5) + 's';
+    c.style.animationDuration = (2 + Math.random() * 1.5) + 's';
+    c.style.transform = `rotate(${Math.random() * 360}deg)`;
+    document.body.appendChild(c);
+    setTimeout(() => c.remove(), 4000);
+  }
+}
+
+/* ============ FORM + SSE ============ */
+const form = document.getElementById('form');
+const submit = document.getElementById('submit');
+const progress = document.getElementById('progress');
+const stage = document.getElementById('stage');
+const msg = document.getElementById('msg');
+const fill = document.getElementById('fill');
+const errorBox = document.getElementById('error');
+const report = document.getElementById('report');
+const heroTitle = document.getElementById('hero-title');
+const heroLead = document.getElementById('hero-lead');
+
+const MODES = {
+  vibe: {
+    hero: '<span class="pop-coral">ПРОВЕРЬ</span><br><span class="pop-violet underline">ВАЙБ</span><br><span class="pop-cyan">ЧЕЛОВЕКА.</span>',
+    lead: 'Reddit, GitHub, Instagram → AI склепает из тебя (или из него) мультяшного человечка, выдаст score и разложит по полочкам.',
+    btn: '↳ Поехали',
+  },
+  self: {
+    hero: '<span class="pop-violet">КАК ТЕБЯ</span><br><span class="pop-coral underline">ВИДЯТ</span><br><span class="pop-cyan">СНАРУЖИ.</span>',
+    lead: 'HR, свидания, клиенты — что они видят, когда гуглят тебя. Покажем твоего человечка + что почистить.',
+    btn: '↳ Аудит профиля',
+  },
+  catfish: {
+    hero: '<span class="pop-coral">НАСТОЯЩИЙ</span><br><span class="pop-violet underline">ЧЕЛОВЕК</span><br><span class="pop-cyan">ИЛИ ФЕЙК?</span>',
+    lead: 'Познакомились онлайн? Зовут на созвон? Проверим согласованность профилей и вынесем вердикт.',
+    btn: '↳ Проверить на фейк',
+  },
+};
+
+let currentMode = 'vibe';
+document.querySelectorAll('.mode-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    currentMode = btn.dataset.mode;
+    document.querySelectorAll('.mode-btn').forEach(b => b.classList.toggle('active', b === btn));
+    const cfg = MODES[currentMode];
+    heroTitle.innerHTML = cfg.hero;
+    heroLead.textContent = cfg.lead;
+    submit.textContent = cfg.btn;
+  });
+});
+
+form.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const fd = new FormData(form);
+  const body = {
+    reddit_username: (fd.get('reddit') || '').trim() || null,
+    github_username: (fd.get('github') || '').trim() || null,
+    instagram_username: (fd.get('instagram') || '').trim() || null,
+    bluesky_handle: (fd.get('bluesky') || '').trim() || null,
+    hackernews_username: (fd.get('hackernews') || '').trim() || null,
+    habr_username: (fd.get('habr') || '').trim() || null,
+    telegram_channel: (fd.get('telegram') || '').trim() || null,
+    mastodon_handle: (fd.get('mastodon') || '').trim() || null,
+    devto_username: (fd.get('devto') || '').trim() || null,
+    substack_username: (fd.get('substack') || '').trim() || null,
+    steam_id: (fd.get('steam') || '').trim() || null,
+    letterboxd_username: (fd.get('letterboxd') || '').trim() || null,
+    goodreads_user_id: (fd.get('goodreads') || '').trim() || null,
+    pikabu_username: (fd.get('pikabu') || '').trim() || null,
+    ig_session: (fd.get('ig_session') || '').trim() || null,
+    mode: currentMode,
+  };
+  const hasAny = Object.entries(body).some(([k, v]) => ['mode','ig_session'].includes(k) ? false : !!v);
+  if (!hasAny) {
+    errorBox.textContent = '⚠ Укажи хотя бы один username';
+    errorBox.classList.add('on');
+    return;
+  }
+  submit.disabled = true;
+  errorBox.classList.remove('on');
+  report.classList.remove('on');
+  progress.classList.add('on');
+  stage.textContent = 'старт';
+  msg.textContent = 'поехали...';
+  fill.style.width = '0%';
+
+  try {
+    const res = await fetch('/api/analyze', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify(body),
+    });
+    if (!res.ok || !res.body) throw new Error('HTTP ' + res.status);
+    const reader = res.body.getReader();
+    const decoder = new TextDecoder();
+    let buf = '';
+    while (true) {
+      const {done, value} = await reader.read();
+      if (done) break;
+      buf += decoder.decode(value, {stream: true});
+      const lines = buf.split('\n');
+      buf = lines.pop() || '';
+      for (const line of lines) {
+        if (!line.startsWith('data: ')) continue;
+        try {
+          const ev = JSON.parse(line.slice(6));
+          stage.textContent = (ev.stage || '').toUpperCase();
+          msg.textContent = ev.message || '';
+          fill.style.width = (ev.progress || 0) + '%';
+          if (ev.stage === 'done' && ev.data) {
+            render(ev.data.report);
+            progress.classList.remove('on');
+          } else if (ev.stage === 'error') {
+            errorBox.textContent = '⚠ ' + ev.message;
+            errorBox.classList.add('on');
+            progress.classList.remove('on');
+          }
+        } catch {}
+      }
+    }
+  } catch (err) {
+    errorBox.textContent = '⚠ Ошибка: ' + err.message;
+    errorBox.classList.add('on');
+    progress.classList.remove('on');
+  } finally {
+    submit.disabled = false;
+  }
+});
+
+function render(r) {
+  document.getElementById('headline').textContent = r.headline || '';
+  document.getElementById('summary').textContent = r.summary || '';
+
+  // avatar
+  const avatar = r.avatar || { gender: 'neutral', mood: 'chill', vibe_color: '#fbbf24', accessories: [], emoji: '✨' };
+  document.getElementById('avatar-frame').innerHTML = buildCharacter(avatar);
+  document.getElementById('score-emoji').textContent = avatar.emoji || scoreEmoji(r.vibe_score || 0);
+
+  // score animate
+  let score = 0;
+  const target = r.vibe_score || 0;
+  const el = document.getElementById('score');
+  const scoreColors = target >= 66 ? ['var(--mint)', 'var(--mint)'] :
+                      target >= 40 ? ['var(--violet)', 'var(--violet)'] :
+                                     ['var(--danger)', 'var(--danger)'];
+  el.style.color = scoreColors[0];
+  const timer = setInterval(() => {
+    score += Math.max(1, Math.ceil((target - score) / 12));
+    if (score >= target) { score = target; clearInterval(timer); if (target >= 70) confetti(); }
+    el.textContent = score;
+  }, 40);
+
+  // interests
+  const interests = document.getElementById('interests');
+  interests.innerHTML = '';
+  (r.top_interests || []).forEach(t => {
+    const chip = document.createElement('div');
+    chip.className = 'chip';
+    chip.textContent = t;
+    interests.appendChild(chip);
+  });
+
+  // traits
+  const traits = document.getElementById('traits');
+  traits.innerHTML = '';
+  (r.personality_traits || []).forEach(t => {
+    const div = document.createElement('div');
+    div.className = 'trait';
+    let dots = '';
+    for (let i = 1; i <= 5; i++) dots += `<div class="trait-dot ${i <= t.strength ? 'on' : ''}"></div>`;
+    div.innerHTML = `
+      <div class="trait-top">
+        <div class="trait-name">${escape(t.name)}</div>
+        <div class="trait-strength">${dots}</div>
+      </div>
+      <div class="trait-evidence">${escape(t.evidence)}</div>
+    `;
+    traits.appendChild(div);
+  });
+
+  // red flags
+  const redflags = document.getElementById('redflags');
+  const rfs = r.red_flags || [];
+  redflags.innerHTML = '';
+  rfs.forEach(f => {
+    const div = document.createElement('div');
+    div.className = 'flag red';
+    div.innerHTML = `<div class="flag-cat">${escape(f.category)} · sev ${f.severity}</div><div class="flag-desc">${escape(f.description)}</div>`;
+    redflags.appendChild(div);
+  });
+  document.getElementById('redflags-section').style.display = rfs.length ? 'block' : 'none';
+
+  // green flags
+  const greenflags = document.getElementById('greenflags');
+  const gfs = r.green_flags || [];
+  greenflags.innerHTML = '';
+  gfs.forEach(t => {
+    const div = document.createElement('div');
+    div.className = 'flag green';
+    div.innerHTML = `<div class="flag-desc">${escape(t)}</div>`;
+    greenflags.appendChild(div);
+  });
+  document.getElementById('greenflags-section').style.display = gfs.length ? 'block' : 'none';
+
+  report.classList.add('on');
+  report.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function escape(s) {
+  const d = document.createElement('div');
+  d.textContent = s || '';
+  return d.innerHTML;
+}
+</script>
+</body>
+</html>
