@@ -302,7 +302,7 @@
         <span class="pop-violet underline">ВАЙБ</span><br>
         <span class="pop-cyan">ЧЕЛОВЕКА.</span>
       </h1>
-      <p class="lead" id="hero-lead">Reddit, GitHub, Instagram → AI склепает из тебя (или из него) мультяшного человечка, выдаст score и разложит по полочкам.</p>
+      <p class="lead" id="hero-lead">Reddit, GitHub, Instagram → AI нарисует аватарку по человеку, посчитает вайб-рейтинг и распишет интересы, характер и флаги.</p>
     </div>
     <div class="hero-char">
       <svg class="char-svg" viewBox="-100 -100 300 300">
@@ -348,7 +348,7 @@
     <button type="button" class="mode-btn" data-mode="self">
       <div class="mode-emoji">🪞</div>
       <div class="mode-title">Аудит себя</div>
-      <div class="mode-desc">Как тебя видят HR, свидания, клиенты.</div>
+      <div class="mode-desc">Как ты выглядишь на дейтах, собесах и созвонах с клиентами.</div>
     </button>
     <button type="button" class="mode-btn" data-mode="catfish">
       <div class="mode-emoji">🎣</div>
@@ -396,7 +396,7 @@
         <label>Steam</label>
         <input name="steam" placeholder="gabelogannewell" autocomplete="off">
       </div>
-      <div class="form-section-label">🇷🇺 Русские</div>
+      <div class="form-section-label">🇷🇺 Русскоязычные</div>
       <div class="field">
         <label>Habr</label>
         <input name="habr" placeholder="alizar" autocomplete="off">
@@ -647,17 +647,17 @@ const heroLead = document.getElementById('hero-lead');
 const MODES = {
   vibe: {
     hero: '<span class="pop-coral">ПРОВЕРЬ</span><br><span class="pop-violet underline">ВАЙБ</span><br><span class="pop-cyan">ЧЕЛОВЕКА.</span>',
-    lead: 'Reddit, GitHub, Instagram → AI склепает из тебя (или из него) мультяшного человечка, выдаст score и разложит по полочкам.',
+    lead: 'Reddit, GitHub, Instagram → AI нарисует аватарку по человеку, посчитает вайб-рейтинг и распишет интересы, характер и флаги.',
     btn: '↳ Поехали',
   },
   self: {
     hero: '<span class="pop-violet">КАК ТЕБЯ</span><br><span class="pop-coral underline">ВИДЯТ</span><br><span class="pop-cyan">СНАРУЖИ.</span>',
-    lead: 'HR, свидания, клиенты — что они видят, когда гуглят тебя. Покажем твоего человечка + что почистить.',
+    lead: 'На дейтах, собесах и созвонах с клиентами — что люди видят, когда гуглят тебя. Покажем твою аватарку и что стоит подчистить.',
     btn: '↳ Аудит профиля',
   },
   catfish: {
     hero: '<span class="pop-coral">НАСТОЯЩИЙ</span><br><span class="pop-violet underline">ЧЕЛОВЕК</span><br><span class="pop-cyan">ИЛИ ФЕЙК?</span>',
-    lead: 'Познакомились онлайн? Зовут на созвон? Проверим согласованность профилей и вынесем вердикт.',
+    lead: 'Познакомились онлайн? Зовут на созвон? Сверим профили на разных платформах — реальный человек или фейк.',
     btn: '↳ Проверить на фейк',
   },
 };
@@ -674,24 +674,33 @@ document.querySelectorAll('.mode-btn').forEach(btn => {
   });
 });
 
+// auto-strip leading @ on blur for all social-handle fields
+document.querySelectorAll('form input[name]:not([name="ig_session"]):not([name="goodreads"]):not([name="steam"])').forEach(inp => {
+  inp.addEventListener('blur', () => { inp.value = inp.value.trim().replace(/^@+/, ''); });
+});
+
 form.addEventListener('submit', async (e) => {
   e.preventDefault();
   const fd = new FormData(form);
+  const norm = (k) => {
+    const v = (fd.get(k) || '').trim().replace(/^@+/, '');
+    return v || null;
+  };
   const body = {
-    reddit_username: (fd.get('reddit') || '').trim() || null,
-    github_username: (fd.get('github') || '').trim() || null,
-    instagram_username: (fd.get('instagram') || '').trim() || null,
-    bluesky_handle: (fd.get('bluesky') || '').trim() || null,
-    hackernews_username: (fd.get('hackernews') || '').trim() || null,
-    habr_username: (fd.get('habr') || '').trim() || null,
-    telegram_channel: (fd.get('telegram') || '').trim() || null,
-    mastodon_handle: (fd.get('mastodon') || '').trim() || null,
-    devto_username: (fd.get('devto') || '').trim() || null,
-    substack_username: (fd.get('substack') || '').trim() || null,
-    steam_id: (fd.get('steam') || '').trim() || null,
-    letterboxd_username: (fd.get('letterboxd') || '').trim() || null,
-    goodreads_user_id: (fd.get('goodreads') || '').trim() || null,
-    pikabu_username: (fd.get('pikabu') || '').trim() || null,
+    reddit_username: norm('reddit'),
+    github_username: norm('github'),
+    instagram_username: norm('instagram'),
+    bluesky_handle: norm('bluesky'),
+    hackernews_username: norm('hackernews'),
+    habr_username: norm('habr'),
+    telegram_channel: norm('telegram'),
+    mastodon_handle: norm('mastodon'),
+    devto_username: norm('devto'),
+    substack_username: norm('substack'),
+    steam_id: norm('steam'),
+    letterboxd_username: norm('letterboxd'),
+    goodreads_user_id: norm('goodreads'),
+    pikabu_username: norm('pikabu'),
     ig_session: (fd.get('ig_session') || '').trim() || null,
     mode: currentMode,
   };
@@ -754,7 +763,8 @@ form.addEventListener('submit', async (e) => {
 
 function render(r) {
   document.getElementById('headline').textContent = r.headline || '';
-  document.getElementById('summary').textContent = r.summary || '';
+  const stripMd = (s) => (s || '').replace(/\*\*/g, '').replace(/__/g, '').replace(/`/g, '');
+  document.getElementById('summary').textContent = stripMd(r.summary);
 
   // avatar
   const avatar = r.avatar || { gender: 'neutral', mood: 'chill', vibe_color: '#fbbf24', accessories: [], emoji: '✨' };
