@@ -33,10 +33,9 @@ class InstagramScraper:
         "X-IG-App-ID": "936619743392459",
         "Accept": "*/*",
     }
-    WEB_PROFILE_URL = "https://i.instagram.com/api/v1/users/web_profile_info/"
-    # Multiple hosts for feed endpoint — some datacenter IPs get blocked on
-    # i.instagram.com but pass through on www./b.i./api. subdomains.
-    FEED_HOSTS = [
+    # Multiple hosts — some datacenter IPs get blocked on i.instagram.com but
+    # pass through on www./b.i./api. subdomains.
+    HOSTS = [
         "https://i.instagram.com",
         "https://www.instagram.com",
         "https://b.i.instagram.com",
@@ -69,7 +68,7 @@ class InstagramScraper:
                 return out
 
             # Try each feed host until one works (datacenter IP blocks vary per host)
-            for host in self.FEED_HOSTS:
+            for host in self.HOSTS:
                 posts = await self._paginate_feed(session, user_id, cookies, host)
                 if posts:
                     out.extend(self._build_posts(posts, username))
@@ -86,10 +85,12 @@ class InstagramScraper:
     async def _fetch_profile(
         self, session: AsyncSession, username: str, cookies: dict | None,
     ) -> dict | None:
-        for attempt in range(self.MAX_RETRIES):
+        # Try each host — skip to next on non-200 immediately (no sleep).
+        for host in self.HOSTS:
+            url = f"{host}/api/v1/users/web_profile_info/"
             try:
                 resp = await session.get(
-                    self.WEB_PROFILE_URL,
+                    url,
                     params={"username": username},
                     headers=self.HEADERS,
                     cookies=cookies,
@@ -97,13 +98,15 @@ class InstagramScraper:
                     timeout=self.TIMEOUT_S,
                 )
                 if resp.status_code == 200:
-                    return resp.json().get("data", {}).get("user") or None
-                logger.info("IG profile {} for @{}, retry {}", resp.status_code, username, attempt + 1)
-                await asyncio.sleep(2)
+                    user = resp.json().get("data", {}).get("user") or None
+                    if user:
+                        logger.info("IG profile ok via {} for @{}", host, username)
+                        return user
+                else:
+                    logger.info("IG profile {} via {} for @{}", resp.status_code, host, username)
             except Exception as exc:
-                logger.warning("IG profile attempt {} failed: {}", attempt + 1, exc)
-                await asyncio.sleep(1)
-        logger.warning("IG profile all retries failed for @{}", username)
+                logger.warning("IG profile via {} failed: {}", host, exc)
+        logger.warning("IG profile: all hosts failed for @{}", username)
         return None
 
     async def _paginate_feed(
