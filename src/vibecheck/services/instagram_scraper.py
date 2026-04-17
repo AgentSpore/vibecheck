@@ -34,7 +34,14 @@ class InstagramScraper:
         "Accept": "*/*",
     }
     WEB_PROFILE_URL = "https://i.instagram.com/api/v1/users/web_profile_info/"
-    FEED_URL = "https://i.instagram.com/api/v1/feed/user/{user_id}/"
+    # Multiple hosts for feed endpoint — some datacenter IPs get blocked on
+    # i.instagram.com but pass through on www./b.i./api. subdomains.
+    FEED_HOSTS = [
+        "https://i.instagram.com",
+        "https://www.instagram.com",
+        "https://b.i.instagram.com",
+        "https://api.instagram.com",
+    ]
     IMPERSONATE = "safari_ios"
     MAX_RETRIES = 3
     TIMEOUT_S = 15
@@ -61,15 +68,16 @@ class InstagramScraper:
                 logger.info("Instagram: {} items for @{} (bio only)", len(out), username)
                 return out
 
-            # Primary: mobile feed endpoint for full pagination (up to MAX_POSTS)
-            posts = await self._paginate_feed(session, user_id, cookies)
-            if posts:
-                out.extend(self._build_posts(posts, username))
-                logger.info("Instagram: {} items for @{} (via feed)", len(out), username)
-                return out
+            # Try each feed host until one works (datacenter IP blocks vary per host)
+            for host in self.FEED_HOSTS:
+                posts = await self._paginate_feed(session, user_id, cookies, host)
+                if posts:
+                    out.extend(self._build_posts(posts, username))
+                    logger.info("Instagram: {} items for @{} (via {})", len(out), username, host)
+                    return out
 
-            # Fallback: 12 posts already embedded in web_profile_info (for IPs where
-            # /api/v1/feed/user/{uid}/ is blocked — happens on some datacenter egresses)
+            # Fallback: 12 posts already embedded in web_profile_info (if ALL feed
+            # hosts blocked — happens on some datacenter egresses)
             edges = profile.get("edge_owner_to_timeline_media", {}).get("edges", [])
             out.extend(self._build_posts_from_edges(edges, username))
             logger.info("Instagram: {} items for @{} (via web_profile fallback)", len(out), username)
@@ -99,11 +107,11 @@ class InstagramScraper:
         return None
 
     async def _paginate_feed(
-        self, session: AsyncSession, user_id: str, cookies: dict | None,
+        self, session: AsyncSession, user_id: str, cookies: dict | None, host: str,
     ) -> list[dict]:
         items: list[dict] = []
         max_id: str | None = None
-        url = self.FEED_URL.format(user_id=user_id)
+        url = f"{host}/api/v1/feed/user/{user_id}/"
         for page in range(self.MAX_PAGES):
             params = {"max_id": max_id} if max_id else {}
             try:
@@ -116,13 +124,19 @@ class InstagramScraper:
                     timeout=self.TIMEOUT_S,
                 )
             except Exception as exc:
-                logger.warning("IG feed page {} failed: {}", page, exc)
+                logger.warning("IG feed {} p{} failed: {}", host, page, exc)
                 break
             if resp.status_code != 200:
-                logger.warning("IG feed page {} HTTP {}", page, resp.status_code)
+                logger.info("IG feed {} p{} HTTP {}", host, page, resp.status_code)
                 break
-            d = resp.json()
+            try:
+                d = resp.json()
+            except Exception:
+                logger.info("IG feed {} p{} non-JSON", host, page)
+                break
             page_items = d.get("items", []) or []
+            if not page_items and page == 0:
+                break  # empty first page → this host doesn't work
             items.extend(page_items)
             if len(items) >= self.MAX_POSTS or not d.get("more_available"):
                 break
