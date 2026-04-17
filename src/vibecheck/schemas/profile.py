@@ -1,9 +1,28 @@
 """Vibe profile DTOs."""
 from __future__ import annotations
 
+import re
 from typing import Literal
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
+
+
+_CYR_RE = re.compile(r"[а-яА-ЯёЁ]")
+_LAT_RE = re.compile(r"[a-zA-Z]")
+
+
+def _require_russian(value: str, field: str) -> str:
+    """Reject output that's mostly English — triggers pydantic-ai retry."""
+    if not value:
+        return value
+    cyr = len(_CYR_RE.findall(value))
+    lat = len(_LAT_RE.findall(value))
+    if lat > 3 and cyr * 2 < lat:
+        raise ValueError(
+            f"{field} должен быть НА РУССКОМ ЯЗЫКЕ (Russian only). "
+            f"Получено с {lat} латинскими и {cyr} кириллическими буквами. Перепиши по-русски."
+        )
+    return value
 
 
 class SocialPost(BaseModel):
@@ -90,6 +109,11 @@ class VibeReport(BaseModel):
     )
     vibe_score: int = Field(ge=0, le=100, description="Overall 'good vibe' score, 0-100")
     summary: str = Field(description="2-3 paragraph human-readable summary")
+
+    @field_validator("headline", "summary")
+    @classmethod
+    def _ru_only(cls, v: str) -> str:
+        return _require_russian(v, "headline/summary")
     avatar: AvatarSpec = Field(description="Cartoon avatar spec derived from analysis")
 
 
