@@ -738,7 +738,8 @@ form.addEventListener('submit', async (e) => {
         if (!line.startsWith('data: ')) continue;
         try {
           const ev = JSON.parse(line.slice(6));
-          stage.textContent = (ev.stage || '').toUpperCase();
+          const STAGE_RU = {scraping: 'СОБИРАЕМ', scraped: 'СОБРАНО', done: 'ГОТОВО', error: 'ОШИБКА'};
+          stage.textContent = STAGE_RU[ev.stage] || (ev.stage || '').toUpperCase();
           msg.textContent = ev.message || '';
           fill.style.width = (ev.progress || 0) + '%';
           if (ev.stage === 'done' && ev.data) {

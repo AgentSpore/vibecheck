@@ -23,7 +23,7 @@ async def analyze(
     """Stream analysis: scrape all platforms in parallel → LLM analysis."""
 
     async def events():
-        yield json.dumps({"stage": "scraping", "progress": 10, "message": "Fetching public activity..."})
+        yield json.dumps({"stage": "scraping", "progress": 10, "message": "Собираем публичную активность..."})
 
         profile = await analyzer.scrape(req)
 
@@ -36,20 +36,20 @@ async def analyze(
             req.steam_id, req.letterboxd_username,
             req.goodreads_user_id, req.pikabu_username,
         ]):
-            yield json.dumps({"stage": "error", "progress": 0, "message": "No usernames provided"})
+            yield json.dumps({"stage": "error", "progress": 0, "message": "Укажи хотя бы один username"})
             return
 
         yield json.dumps({
             "stage": "scraped",
             "progress": 40,
-            "message": f"Got {profile.total_items} items. Analyzing vibe...",
+            "message": f"Собрали {profile.total_items} {_plural(profile.total_items)}. Анализируем вайб...",
         })
 
         if profile.total_items == 0:
             yield json.dumps({
                 "stage": "error",
                 "progress": 0,
-                "message": "No public data found. Check usernames or try another platform.",
+                "message": "Нет публичных данных. Проверь username или попробуй другую платформу.",
             })
             return
 
@@ -60,14 +60,14 @@ async def analyze(
             yield json.dumps({
                 "stage": "error",
                 "progress": 0,
-                "message": "LLM service unavailable. Try again shortly.",
+                "message": "LLM сервис недоступен. Попробуй чуть позже.",
             })
             return
 
         yield json.dumps({
             "stage": "done",
             "progress": 100,
-            "message": "Analysis complete",
+            "message": "Анализ завершён",
             "data": {
                 "profile": {
                     "reddit_username": profile.reddit_username,
@@ -92,6 +92,19 @@ async def analyze(
         })
 
     return EventSourceResponse(events())
+
+
+def _plural(n: int) -> str:
+    """Russian plural for 'запись' (record)."""
+    n_abs = abs(n) % 100
+    if 11 <= n_abs <= 14:
+        return "записей"
+    last = n_abs % 10
+    if last == 1:
+        return "запись"
+    if 2 <= last <= 4:
+        return "записи"
+    return "записей"
 
 
 def _escape_report(report: dict) -> dict:
