@@ -60,11 +60,20 @@ class InstagramScraper:
             if profile.get("is_private", False) or not user_id:
                 logger.info("Instagram: {} items for @{} (bio only)", len(out), username)
                 return out
-            posts = await self._paginate_feed(session, user_id, cookies)
-            out.extend(self._build_posts(posts, username))
 
-        logger.info("Instagram: {} items for @{}", len(out), username)
-        return out
+            # Primary: mobile feed endpoint for full pagination (up to MAX_POSTS)
+            posts = await self._paginate_feed(session, user_id, cookies)
+            if posts:
+                out.extend(self._build_posts(posts, username))
+                logger.info("Instagram: {} items for @{} (via feed)", len(out), username)
+                return out
+
+            # Fallback: 12 posts already embedded in web_profile_info (for IPs where
+            # /api/v1/feed/user/{uid}/ is blocked — happens on some datacenter egresses)
+            edges = profile.get("edge_owner_to_timeline_media", {}).get("edges", [])
+            out.extend(self._build_posts_from_edges(edges, username))
+            logger.info("Instagram: {} items for @{} (via web_profile fallback)", len(out), username)
+            return out
 
     async def _fetch_profile(
         self, session: AsyncSession, username: str, cookies: dict | None,
@@ -150,6 +159,26 @@ class InstagramScraper:
         ).strip()
 
         return SocialPost(platform="instagram", kind="bio", context=username, text=text[:800])
+
+    @staticmethod
+    def _build_posts_from_edges(edges: list[dict], username: str) -> list[SocialPost]:
+        """Parse web_profile_info's edge_owner_to_timeline_media (GraphQL structure)."""
+        out: list[SocialPost] = []
+        for edge in edges:
+            node = edge.get("node", {}) or {}
+            caps = node.get("edge_media_to_caption", {}).get("edges", [])
+            caption = caps[0]["node"]["text"] if caps else ""
+            likes = node.get("edge_liked_by", {}).get("count", 0) or 0
+            comments = node.get("edge_media_to_comment", {}).get("count", 0) or 0
+            typename = node.get("__typename", "GraphImage")
+            is_video = node.get("is_video", False)
+            kind = (
+                "video" if is_video
+                else ("carousel" if typename == "GraphSidecar" else "photo")
+            )
+            text = f"[{likes:,} likes, {comments:,} comments] {caption}"[:600]
+            out.append(SocialPost(platform="instagram", kind=kind, context=username, text=text))
+        return out
 
     @staticmethod
     def _build_posts(items: list[dict], username: str) -> list[SocialPost]:
