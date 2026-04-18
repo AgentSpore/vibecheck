@@ -20,5 +20,10 @@ class Settings(BaseSettings):
     retries_per_model: int = 2
     port: int = 8895
 
+    # Residential proxy for Instagram (Smartproxy/Bright Data/etc.)
+    # Format: "http://user:password@gate.smartproxy.com:7000"
+    # Leave empty to fall back to direct requests (works locally, blocked on prod IPs).
+    ig_proxy_url: str = ""
+
 
 settings = Settings()

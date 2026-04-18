@@ -18,6 +18,7 @@ import asyncio
 from curl_cffi.requests import AsyncSession
 from loguru import logger
 
+from vibecheck.core.config import settings
 from vibecheck.schemas.profile import SocialPost
 
 
@@ -57,7 +58,11 @@ class InstagramScraper:
             return []
 
         cookies = {"sessionid": ig_session.strip()} if ig_session else None
-        async with AsyncSession() as session:
+        session_kwargs: dict = {}
+        if settings.ig_proxy_url:
+            session_kwargs["proxy"] = settings.ig_proxy_url
+            logger.debug("IG: using residential proxy")
+        async with AsyncSession(**session_kwargs) as session:
             profile = await self._fetch_profile(session, username, cookies)
             if not profile:
                 return []
