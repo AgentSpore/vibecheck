@@ -1,7 +1,10 @@
-.PHONY: install dev run smoke docker
+.PHONY: install dev run smoke test docker
 
 install:
-	uv sync
+	uv sync --extra dev
+
+test:
+	uv run --extra dev pytest -q
 
 dev:
 	uv run uvicorn vibecheck.main:app --host 0.0.0.0 --port 8895 --reload

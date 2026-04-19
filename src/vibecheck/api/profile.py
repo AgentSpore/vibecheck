@@ -4,13 +4,14 @@ from __future__ import annotations
 import html
 import json
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException, status
 from loguru import logger
 from sse_starlette.sse import EventSourceResponse
 
 from vibecheck.core.deps import enforce_rate_limit, get_profile_analyzer
+from vibecheck.core.share_cache import get_share_cache
 from vibecheck.schemas.profile import AnalyzeRequest
-from vibecheck.services.profile_analyzer import ProfileAnalyzer
+from vibecheck.services.profile_analyzer import ProfileAnalyzer, items_by_platform
 
 router = APIRouter(tags=["profile"])
 
@@ -64,34 +65,60 @@ async def analyze(
             })
             return
 
+        profile_payload = {
+            "reddit_username": profile.reddit_username,
+            "github_username": profile.github_username,
+            "instagram_username": profile.instagram_username,
+            "bluesky_handle": profile.bluesky_handle,
+            "hackernews_username": profile.hackernews_username,
+            "habr_username": profile.habr_username,
+            "telegram_channel": profile.telegram_channel,
+            "mastodon_handle": profile.mastodon_handle,
+            "devto_username": profile.devto_username,
+            "substack_username": profile.substack_username,
+            "steam_id": profile.steam_id,
+            "letterboxd_username": profile.letterboxd_username,
+            "goodreads_user_id": profile.goodreads_user_id,
+            "pikabu_username": profile.pikabu_username,
+            "total_items": profile.total_items,
+            "items_by_platform": items_by_platform(profile),
+            "errors": profile.errors,
+        }
+        escaped_report = _escape_report(report.model_dump())
+
+        share_payload = {"profile": profile_payload, "report": escaped_report}
+        try:
+            share_id = await get_share_cache().put(share_payload)
+        except Exception as exc:
+            logger.warning("Share cache put failed: {}", exc)
+            share_id = None
+
         yield json.dumps({
             "stage": "done",
             "progress": 100,
             "message": "Анализ завершён",
             "data": {
-                "profile": {
-                    "reddit_username": profile.reddit_username,
-                    "github_username": profile.github_username,
-                    "instagram_username": profile.instagram_username,
-                    "bluesky_handle": profile.bluesky_handle,
-                    "hackernews_username": profile.hackernews_username,
-                    "habr_username": profile.habr_username,
-                    "telegram_channel": profile.telegram_channel,
-                    "mastodon_handle": profile.mastodon_handle,
-                    "devto_username": profile.devto_username,
-                    "substack_username": profile.substack_username,
-                    "steam_id": profile.steam_id,
-                    "letterboxd_username": profile.letterboxd_username,
-                    "goodreads_user_id": profile.goodreads_user_id,
-                    "pikabu_username": profile.pikabu_username,
-                    "total_items": profile.total_items,
-                    "errors": profile.errors,
-                },
-                "report": _escape_report(report.model_dump()),
+                "profile": profile_payload,
+                "report": escaped_report,
+                "share_id": share_id,
             },
         })
 
     return EventSourceResponse(events())
+
+
+@router.get("/share/{share_id}")
+async def get_shared(share_id: str) -> dict:
+    """Return cached report for a share link, or 404 if expired/unknown."""
+    if not share_id or len(share_id) > 64 or not share_id.isalnum():
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Share not found")
+    payload = await get_share_cache().get(share_id)
+    if payload is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Ссылка просрочена или не существует",
+        )
+    return payload
 
 
 def _plural(n: int) -> str:

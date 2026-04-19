@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VibeCheck — shared report</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bagel+Fat+One&family=Funnel+Sans:wght@300..800&family=Caprasimo&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --cream: #fef3e2; --paper: #fffaf0; --ink: #1a1410; --ink2: #5a4a3a;
+    --coral: #ff5c8a; --violet: #7c4dff; --cyan: #22d3ee;
+    --yellow: #fbbf24; --mint: #10b981; --danger: #ef4444;
+    --shadow: 4px 4px 0 var(--ink); --shadow-lg: 8px 8px 0 var(--ink);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { background: var(--cream); color: var(--ink); font-family: 'Funnel Sans', sans-serif; min-height: 100vh; }
+  .container { max-width: 1100px; margin: 0 auto; padding: 32px 24px 80px; }
+  header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 32px; }
+  .logo-wrap { display: flex; align-items: center; gap: 12px; }
+  .logo-mark { width: 48px; height: 48px; background: var(--coral); border: 3px solid var(--ink); box-shadow: var(--shadow);
+    display: grid; place-items: center; transform: rotate(-5deg); font-family: 'Bagel Fat One'; font-size: 26px; }
+  .logo-text { font-family: 'Bagel Fat One'; font-size: 22px; }
+  .badge-shared { background: var(--cyan); border: 2px solid var(--ink); padding: 6px 12px;
+    font-weight: 800; font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase;
+    transform: rotate(2deg); box-shadow: 3px 3px 0 var(--ink); }
+
+  .breakdown {
+    display: flex; flex-wrap: wrap; gap: 10px; padding: 10px 14px; margin-bottom: 16px;
+    background: var(--paper); border: 3px solid var(--ink); box-shadow: var(--shadow);
+    font-size: 13px; font-weight: 700; align-items: center;
+  }
+  .breakdown .label { font-family: 'Bagel Fat One'; font-size: 14px; letter-spacing: 0.06em; }
+  .breakdown .item { padding: 4px 8px; background: var(--cream); border: 2px solid var(--ink); }
+
+  .report-top { display: grid; grid-template-columns: 320px 1fr; gap: 32px; align-items: center; margin-bottom: 40px; }
+  @media (max-width: 720px) { .report-top { grid-template-columns: 1fr; } }
+  .avatar-frame { background: var(--paper); border: 3px solid var(--ink); padding: 24px;
+    box-shadow: var(--shadow-lg); display: grid; place-items: center; min-height: 300px; }
+  .score-main { font-family: 'Bagel Fat One'; font-size: clamp(6rem, 14vw, 10rem); line-height: 0.9; letter-spacing: -0.04em; }
+  .score-label { font-family: 'Bagel Fat One'; font-size: 16px; letter-spacing: 0.08em; color: var(--violet); }
+  .score-hundred { font-family: 'Bagel Fat One'; font-size: 36px; color: var(--ink2); }
+  .headline-card { background: var(--paper); border: 3px solid var(--ink); padding: 20px 24px;
+    box-shadow: var(--shadow); font-family: 'Caprasimo', serif; font-size: clamp(20px, 2.4vw, 28px); line-height: 1.3; transform: rotate(-0.5deg); }
+
+  .sticker-grid { display: grid; grid-template-columns: repeat(12, 1fr); gap: 20px; }
+  .card { background: var(--paper); border: 3px solid var(--ink); padding: 20px; box-shadow: var(--shadow); }
+  .card-title { font-family: 'Bagel Fat One'; font-size: 18px; letter-spacing: 0.02em;
+    margin-bottom: 14px; display: inline-block; padding: 4px 10px; background: var(--ink); color: var(--paper); }
+  .card.interests { grid-column: span 12; } .card.interests .card-title { background: var(--coral); }
+  .card.traits { grid-column: span 7; } .card.traits .card-title { background: var(--violet); color: var(--paper); }
+  .card.redflags { grid-column: span 5; background: #fff1ec; } .card.redflags .card-title { background: var(--danger); color: var(--paper); }
+  .card.greenflags { grid-column: span 5; background: #e8faf3; } .card.greenflags .card-title { background: var(--mint); color: var(--paper); }
+  .card.summary { grid-column: span 7; background: var(--yellow); } .card.summary .card-title { background: var(--ink); color: var(--yellow); }
+  @media (max-width: 860px) { .card.traits, .card.redflags, .card.greenflags, .card.summary { grid-column: span 12; } }
+
+  .chips { display: flex; flex-wrap: wrap; gap: 10px; }
+  .chip { padding: 8px 14px; background: var(--paper); border: 2px solid var(--ink); font-weight: 700; font-size: 14px; box-shadow: 2px 2px 0 var(--ink); }
+  .chip:nth-child(3n) { background: var(--cyan); }
+  .chip:nth-child(3n+1) { background: var(--yellow); }
+  .chip:nth-child(3n+2) { background: #ffe0ec; }
+  .trait { padding: 12px 0; border-bottom: 2px dashed var(--ink); }
+  .trait:last-child { border-bottom: none; }
+  .trait-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; }
+  .trait-name { font-weight: 800; font-size: 16px; }
+  .trait-strength { display: flex; gap: 3px; }
+  .trait-dot { width: 12px; height: 12px; background: var(--cream); border: 2px solid var(--ink); }
+  .trait-dot.on { background: var(--violet); }
+  .trait-evidence { font-size: 13px; color: var(--ink2); line-height: 1.5; }
+  .flag { padding: 10px 14px; margin-bottom: 10px; background: var(--paper); border: 2px solid var(--ink); box-shadow: 2px 2px 0 var(--ink); }
+  .flag-cat { font-weight: 800; font-size: 12px; letter-spacing: 0.05em; text-transform: uppercase; margin-bottom: 4px; }
+  .flag.red .flag-cat { color: var(--danger); }
+  .flag.green .flag-cat { color: var(--mint); }
+  .flag-desc { font-size: 13px; color: var(--ink2); line-height: 1.4; }
+  .summary-text { font-family: 'Caprasimo', serif; font-size: 16px; line-height: 1.65; white-space: pre-wrap; }
+  .expired { text-align: center; padding: 60px 20px; }
+  .expired h2 { font-family: 'Bagel Fat One'; font-size: 32px; margin-bottom: 12px; color: var(--danger); }
+  .expired a { display: inline-block; margin-top: 16px; padding: 14px 24px; background: var(--ink); color: var(--yellow);
+    font-family: 'Bagel Fat One'; font-size: 18px; text-decoration: none; box-shadow: var(--shadow); border: 3px solid var(--ink); }
+  .char-svg { width: 260px; height: 260px; overflow: visible; }
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <a href="/" style="text-decoration:none;color:inherit">
+      <div class="logo-wrap">
+        <div class="logo-mark">V</div>
+        <div class="logo-text">VibeCheck</div>
+      </div>
+    </a>
+    <div class="badge-shared">🔗 Shared report</div>
+  </header>
+
+  <div id="content">
+    <div style="text-align:center;padding:60px 20px;font-size:18px;color:var(--ink2)">Загружаем отчёт...</div>
+  </div>
+</div>
+
+<script>
+const SHARE_ID = location.pathname.split('/').filter(Boolean).pop();
+const MOOD_EYES = {
+  joyful:     '<path d="M 18 35 Q 25 28 32 35" fill="none" stroke="#1a1410" stroke-width="4" stroke-linecap="round"/><path d="M 68 35 Q 75 28 82 35" fill="none" stroke="#1a1410" stroke-width="4" stroke-linecap="round"/>',
+  chill:      '<path d="M 18 35 L 32 35" stroke="#1a1410" stroke-width="4" stroke-linecap="round"/><path d="M 68 35 L 82 35" stroke="#1a1410" stroke-width="4" stroke-linecap="round"/>',
+  curious:    '<circle cx="25" cy="35" r="7" fill="#1a1410"/><circle cx="75" cy="35" r="7" fill="#1a1410"/>',
+  focused:    '<path d="M 16 36 Q 25 33 34 36" fill="none" stroke="#1a1410" stroke-width="4" stroke-linecap="round"/><path d="M 66 36 Q 75 33 84 36" fill="none" stroke="#1a1410" stroke-width="4" stroke-linecap="round"/>',
+  shy:        '<circle cx="25" cy="36" r="4" fill="#1a1410"/><circle cx="75" cy="36" r="4" fill="#1a1410"/>',
+  sad:        '<path d="M 16 34 Q 25 40 34 34" fill="none" stroke="#1a1410" stroke-width="4" stroke-linecap="round"/><path d="M 66 34 Q 75 40 84 34" fill="none" stroke="#1a1410" stroke-width="4" stroke-linecap="round"/>',
+  angry:      '<path d="M 14 28 L 34 36" stroke="#1a1410" stroke-width="4" stroke-linecap="round"/><path d="M 66 36 L 86 28" stroke="#1a1410" stroke-width="4" stroke-linecap="round"/>',
+  suspicious: '<path d="M 16 36 L 34 36" stroke="#1a1410" stroke-width="4" stroke-linecap="round"/><path d="M 66 36 L 84 36" stroke="#1a1410" stroke-width="4" stroke-linecap="round"/>',
+};
+const PLATFORM_SHORT = {
+  reddit: 'R', github: 'GH', instagram: 'IG', bluesky: 'BSky', hackernews: 'HN',
+  habr: 'Habr', telegram: 'TG', mastodon: 'Masto', devto: 'Dev.to', substack: 'Sub',
+  steam: 'Steam', letterboxd: 'LB', goodreads: 'GR', pikabu: 'Pikabu',
+};
+
+function renderExpired() {
+  document.getElementById('content').innerHTML = `
+    <div class="expired">
+      <h2>Ссылка просрочена</h2>
+      <p style="font-size:16px;color:var(--ink2)">Отчёты живут 30 минут. Попроси владельца перезапустить.</p>
+      <a href="/">↳ Сделать свой vibe-check</a>
+    </div>`;
+}
+
+function simpleAvatar(avatar) {
+  const skin = avatar.vibe_color || '#fbbf24';
+  const eyes = MOOD_EYES[avatar.mood] || MOOD_EYES.chill;
+  return `<svg class="char-svg" viewBox="-60 -90 220 260">
+    <circle cx="50" cy="40" r="55" fill="${skin}" stroke="#1a1410" stroke-width="4"/>
+    ${eyes}
+    <path d="M 32 65 Q 50 72 68 65" fill="none" stroke="#1a1410" stroke-width="4" stroke-linecap="round"/>
+  </svg>`;
+}
+
+function escapeHtml(s) { const d = document.createElement('div'); d.textContent = s || ''; return d.innerHTML; }
+
+function renderReport(payload) {
+  const { profile, report } = payload;
+  const breakdown = profile.items_by_platform || {};
+  const breakdownHtml = Object.entries(breakdown)
+    .sort((a, b) => b[1] - a[1])
+    .map(([p, n]) => `<span class="item">${PLATFORM_SHORT[p] || p} ${n}</span>`).join('');
+  const avatar = report.avatar || { mood: 'chill', vibe_color: '#fbbf24', emoji: '✨' };
+
+  const interests = (report.top_interests || []).map(t => `<div class="chip">${escapeHtml(t)}</div>`).join('');
+  const traits = (report.personality_traits || []).map(t => {
+    let dots = '';
+    for (let i = 1; i <= 5; i++) dots += `<div class="trait-dot ${i <= t.strength ? 'on' : ''}"></div>`;
+    return `<div class="trait"><div class="trait-top"><div class="trait-name">${escapeHtml(t.name)}</div><div class="trait-strength">${dots}</div></div><div class="trait-evidence">${escapeHtml(t.evidence)}</div></div>`;
+  }).join('');
+  const redflags = (report.red_flags || []).map(f =>
+    `<div class="flag red"><div class="flag-cat">${escapeHtml(f.category)} · sev ${f.severity}</div><div class="flag-desc">${escapeHtml(f.description)}</div></div>`
+  ).join('');
+  const greenflags = (report.green_flags || []).map(t =>
+    `<div class="flag green"><div class="flag-desc">${escapeHtml(t)}</div></div>`
+  ).join('');
+
+  document.getElementById('content').innerHTML = `
+    ${breakdownHtml ? `<div class="breakdown"><span class="label">Источники:</span>${breakdownHtml}</div>` : ''}
+    <div class="report-top">
+      <div class="avatar-frame">${simpleAvatar(avatar)}</div>
+      <div>
+        <div class="score-label">✨ ВАЙБ-СКОР</div>
+        <div style="display:flex;align-items:baseline;gap:16px;margin-bottom:14px">
+          <div class="score-main">${report.vibe_score ?? 0}</div>
+          <div class="score-hundred">/ 100</div>
+          <div style="font-size:48px">${avatar.emoji || '✨'}</div>
+        </div>
+        <div class="headline-card">${escapeHtml(report.headline || '')}</div>
+      </div>
+    </div>
+    <div class="sticker-grid">
+      <div class="card interests"><div class="card-title">🎯 Топ интересы</div><div class="chips">${interests}</div></div>
+      <div class="card traits"><div class="card-title">🧠 Черты характера</div><div>${traits}</div></div>
+      ${redflags ? `<div class="card redflags"><div class="card-title">🚩 Красные флаги</div>${redflags}</div>` : ''}
+      ${greenflags ? `<div class="card greenflags"><div class="card-title">🌱 Зелёные флаги</div>${greenflags}</div>` : ''}
+      <div class="card summary"><div class="card-title">📝 Вердикт</div><div class="summary-text">${escapeHtml(report.summary || '')}</div></div>
+    </div>`;
+}
+
+(async () => {
+  if (!SHARE_ID || !/^[a-z0-9]+$/i.test(SHARE_ID)) { renderExpired(); return; }
+  try {
+    const r = await fetch(`/api/share/${SHARE_ID}`);
+    if (!r.ok) { renderExpired(); return; }
+    renderReport(await r.json());
+  } catch { renderExpired(); }
+})();
+</script>
+</body>
+</html>

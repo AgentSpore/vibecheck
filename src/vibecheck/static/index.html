@@ -180,6 +180,30 @@
 
   .error { display: none; margin-top: 16px; padding: 16px; border: 3px solid var(--danger); background: #ffe8e8; font-weight: 700; }
   .error.on { display: block; }
+  .error-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 12px; }
+  .error-action {
+    padding: 8px 14px; background: var(--paper); border: 2px solid var(--ink);
+    font-family: inherit; font-weight: 700; font-size: 13px; cursor: pointer;
+    box-shadow: 2px 2px 0 var(--ink); color: var(--ink);
+  }
+  .error-action:hover { transform: translate(-1px, -1px); box-shadow: 3px 3px 0 var(--ink); }
+  .error-action select { border: none; background: transparent; font-family: inherit; font-weight: 700; font-size: 13px; outline: none; }
+
+  .breakdown {
+    display: flex; flex-wrap: wrap; gap: 8px; padding: 10px 14px; margin-bottom: 18px;
+    background: var(--paper); border: 3px solid var(--ink); box-shadow: var(--shadow);
+    font-size: 13px; font-weight: 700; align-items: center;
+  }
+  .breakdown .label { font-family: 'Bagel Fat One'; font-size: 13px; letter-spacing: 0.06em; margin-right: 4px; }
+  .breakdown .item { padding: 3px 8px; background: var(--cream); border: 2px solid var(--ink); }
+
+  .share-row { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; margin-top: 10px; }
+  .share-btn {
+    padding: 8px 14px; background: var(--cyan); border: 2px solid var(--ink); font-family: inherit;
+    font-weight: 800; font-size: 13px; cursor: pointer; box-shadow: 2px 2px 0 var(--ink); color: var(--ink);
+  }
+  .share-btn:hover { transform: translate(-1px, -1px); box-shadow: 3px 3px 0 var(--ink); }
+  .share-btn.copied { background: var(--mint); color: var(--paper); }
 
   /* REPORT */
   .report { display: none; margin-top: 64px; }
@@ -445,9 +469,13 @@
     <div class="msg" id="msg">собираем вайб...</div>
     <div class="progress-bar-outer"><div class="progress-fill" id="fill" style="width:0%"></div></div>
   </div>
-  <div class="error" id="error"></div>
+  <div class="error" id="error">
+    <div id="error-msg"></div>
+    <div class="error-actions" id="error-actions"></div>
+  </div>
 
   <section class="report" id="report">
+    <div class="breakdown" id="breakdown" style="display:none"></div>
     <div class="report-top">
       <div class="avatar-frame" id="avatar-frame"></div>
       <div class="score-wrap">
@@ -458,6 +486,10 @@
           <div class="score-emoji" id="score-emoji">✨</div>
         </div>
         <div class="headline-card" id="headline"></div>
+        <div class="share-row" id="share-row" style="display:none">
+          <button type="button" class="share-btn" id="share-btn">🔗 Скопировать ссылку</button>
+          <span id="share-hint" style="font-size:12px;color:var(--ink2);font-weight:600"></span>
+        </div>
       </div>
     </div>
 
@@ -640,6 +672,8 @@ const stage = document.getElementById('stage');
 const msg = document.getElementById('msg');
 const fill = document.getElementById('fill');
 const errorBox = document.getElementById('error');
+const errorMsg = document.getElementById('error-msg');
+const errorActions = document.getElementById('error-actions');
 const report = document.getElementById('report');
 const heroTitle = document.getElementById('hero-title');
 const heroLead = document.getElementById('hero-lead');
@@ -706,8 +740,7 @@ form.addEventListener('submit', async (e) => {
   };
   const hasAny = Object.entries(body).some(([k, v]) => ['mode','ig_session'].includes(k) ? false : !!v);
   if (!hasAny) {
-    errorBox.textContent = '⚠ Укажи хотя бы один username';
-    errorBox.classList.add('on');
+    showError('⚠ Укажи хотя бы один username', []);
     return;
   }
   submit.disabled = true;
@@ -743,26 +776,119 @@ form.addEventListener('submit', async (e) => {
           msg.textContent = ev.message || '';
           fill.style.width = (ev.progress || 0) + '%';
           if (ev.stage === 'done' && ev.data) {
-            render(ev.data.report);
+            render(ev.data.report, ev.data.profile, ev.data.share_id);
             progress.classList.remove('on');
           } else if (ev.stage === 'error') {
-            errorBox.textContent = '⚠ ' + ev.message;
-            errorBox.classList.add('on');
+            showError('⚠ ' + ev.message, suggestionsFor(ev.message));
             progress.classList.remove('on');
           }
         } catch {}
       }
     }
   } catch (err) {
-    errorBox.textContent = '⚠ Ошибка: ' + err.message;
-    errorBox.classList.add('on');
+    showError('⚠ Ошибка: ' + err.message, []);
     progress.classList.remove('on');
   } finally {
     submit.disabled = false;
   }
 });
 
-function render(r) {
+const PLATFORM_SHORT = {
+  reddit: 'R', github: 'GH', instagram: 'IG', bluesky: 'BSky', hackernews: 'HN',
+  habr: 'Habr', telegram: 'TG', mastodon: 'Masto', devto: 'Dev.to', substack: 'Sub',
+  steam: 'Steam', letterboxd: 'LB', goodreads: 'GR', pikabu: 'Pikabu',
+};
+
+function showError(message, suggestions) {
+  errorMsg.textContent = message;
+  errorActions.innerHTML = '';
+  (suggestions || []).forEach(s => {
+    if (s.type === 'dropdown') {
+      const wrap = document.createElement('label');
+      wrap.className = 'error-action';
+      wrap.innerHTML = `${s.label} `;
+      const sel = document.createElement('select');
+      (s.options || []).forEach(opt => {
+        const o = document.createElement('option');
+        o.value = opt; o.textContent = opt;
+        sel.appendChild(o);
+      });
+      sel.addEventListener('change', () => s.onChange && s.onChange(sel.value));
+      wrap.appendChild(sel);
+      errorActions.appendChild(wrap);
+    } else {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'error-action';
+      btn.textContent = s.label;
+      btn.addEventListener('click', s.onClick);
+      errorActions.appendChild(btn);
+    }
+  });
+  errorBox.classList.add('on');
+}
+
+function suggestionsFor(msg) {
+  const out = [];
+  if (/LLM|нед(оступ|остуn)/i.test(msg)) {
+    out.push({
+      type: 'dropdown',
+      label: '🔁 Модель:',
+      options: ['auto', ...(window.__FALLBACKS || [])],
+      onChange: (v) => { window.__FORCED_MODEL = v === 'auto' ? null : v; errorBox.classList.remove('on'); },
+    });
+    out.push({ label: '↻ Повторить', onClick: () => { errorBox.classList.remove('on'); form.dispatchEvent(new Event('submit', {cancelable: true})); } });
+  }
+  if (/публичных|username|Укажи/i.test(msg)) {
+    out.push({
+      label: '✎ Другой username',
+      onClick: () => {
+        errorBox.classList.remove('on');
+        const first = form.querySelector('input[name]');
+        if (first) { first.focus(); first.select(); }
+      },
+    });
+  }
+  return out;
+}
+
+// Fetch fallback model list once for error recovery UX.
+fetch('/api/health').then(r => r.json()).then(h => { window.__FALLBACKS = h.fallback_models || []; }).catch(() => {});
+
+function renderBreakdown(profile) {
+  const wrap = document.getElementById('breakdown');
+  const counts = (profile && profile.items_by_platform) || {};
+  const entries = Object.entries(counts).sort((a, b) => b[1] - a[1]);
+  if (!entries.length) { wrap.style.display = 'none'; return; }
+  wrap.innerHTML = '<span class="label">Источники:</span>' +
+    entries.map(([p, n]) => `<span class="item">${PLATFORM_SHORT[p] || p} ${n}</span>`).join('');
+  wrap.style.display = 'flex';
+}
+
+function setupShare(shareId) {
+  const row = document.getElementById('share-row');
+  if (!shareId) { row.style.display = 'none'; return; }
+  row.style.display = 'flex';
+  const btn = document.getElementById('share-btn');
+  const hint = document.getElementById('share-hint');
+  const url = `${location.origin}/s/${shareId}`;
+  hint.textContent = '(живёт 30 минут)';
+  btn.classList.remove('copied');
+  btn.textContent = '🔗 Скопировать ссылку';
+  btn.onclick = async () => {
+    try {
+      await navigator.clipboard.writeText(url);
+      btn.textContent = '✓ Скопировано';
+      btn.classList.add('copied');
+    } catch {
+      prompt('Скопируй вручную:', url);
+    }
+  };
+}
+
+function render(r, profile, shareId) {
+  renderBreakdown(profile);
+  setupShare(shareId);
   document.getElementById('headline').textContent = r.headline || '';
   const stripMd = (s) => (s || '').replace(/\*\*/g, '').replace(/__/g, '').replace(/`/g, '');
   document.getElementById('summary').textContent = stripMd(r.summary);

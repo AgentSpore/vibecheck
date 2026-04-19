@@ -38,6 +38,14 @@ async def index():
     return {"error": "static/index.html missing"}
 
 
+@app.get("/s/{share_id}")
+async def share_page(share_id: str):  # noqa: ARG001 — share_id consumed client-side via /api/share
+    share_file = STATIC_DIR / "share.html"
+    if share_file.exists():
+        return FileResponse(share_file)
+    return {"error": "static/share.html missing"}
+
+
 if STATIC_DIR.exists():
     app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
 

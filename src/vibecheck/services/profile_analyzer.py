@@ -129,3 +129,11 @@ class ProfileAnalyzer:
 
     async def analyze(self, profile: ScrapedProfile, mode: AnalysisMode) -> VibeReport:
         return await self.agent.analyze(profile, mode)
+
+
+def items_by_platform(profile: ScrapedProfile) -> dict[str, int]:
+    """Count posts per platform for the breakdown plaque in UI."""
+    counts: dict[str, int] = {}
+    for post in profile.posts:
+        counts[post.platform] = counts.get(post.platform, 0) + 1
+    return counts

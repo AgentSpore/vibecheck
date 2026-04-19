@@ -11,6 +11,7 @@ import re
 import httpx
 from loguru import logger
 
+from vibecheck.core.config import settings
 from vibecheck.schemas.profile import SocialPost
 
 
@@ -21,6 +22,7 @@ class SteamScraper:
     TIMEOUT_S = 15.0
     MAX_GAMES = 10
     MAX_GROUPS = 5
+    VANITY_URL = "https://api.steampowered.com/ISteamUser/ResolveVanityURL/v0001/"
 
     TAG_RE = {
         "steamID": re.compile(r"<steamID><!\[CDATA\[(.+?)\]\]></steamID>", re.DOTALL),
@@ -45,19 +47,46 @@ class SteamScraper:
         if not steam_id:
             return []
 
-        url = self._build_url(steam_id)
         try:
             async with httpx.AsyncClient(timeout=self.TIMEOUT_S, headers=self.UA, follow_redirects=True) as client:
+                ident = await self._resolve(steam_id, client)
+                url = self._build_url(ident)
                 resp = await client.get(url)
                 if resp.status_code != 200 or "<profile>" not in resp.text[:200]:
-                    logger.warning("Steam {} for {} ({})", resp.status_code, steam_id, url)
+                    logger.warning("Steam {} for {} ({})", resp.status_code, ident, url)
                     return []
-                posts = self._parse(resp.text, steam_id)
-                logger.info("Steam: {} items for {}", len(posts), steam_id)
+                posts = self._parse(resp.text, ident)
+                logger.info("Steam: {} items for {}", len(posts), ident)
                 return posts
         except Exception as exc:
             logger.warning("Steam fetch failed for {}: {}", steam_id, exc)
             return []
+
+    async def _resolve(self, ident: str, client: httpx.AsyncClient) -> str:
+        """Resolve vanity URL -> SteamID64 via Web API if key present.
+
+        Fallback behaviour (no key): keep as-is — XML endpoint accepts /id/{name}
+        directly but only for vanity URLs exactly matching the custom URL slug.
+        """
+        if ident.isdigit() and len(ident) >= 15:
+            return ident
+        if not settings.steam_api_key:
+            return ident
+        try:
+            resp = await client.get(
+                self.VANITY_URL,
+                params={"key": settings.steam_api_key, "vanityurl": ident},
+            )
+            if resp.status_code != 200:
+                return ident
+            data = resp.json().get("response", {})
+            if data.get("success") == 1 and data.get("steamid"):
+                resolved = str(data["steamid"])
+                logger.info("Steam vanity {} -> {}", ident, resolved)
+                return resolved
+        except Exception as exc:
+            logger.warning("Steam vanity resolve failed for {}: {}", ident, exc)
+        return ident
 
     @staticmethod
     def _build_url(ident: str) -> str:

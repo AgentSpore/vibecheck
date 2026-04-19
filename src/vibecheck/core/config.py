@@ -25,5 +25,9 @@ class Settings(BaseSettings):
     # Leave empty to fall back to direct requests (works locally, blocked on prod IPs).
     ig_proxy_url: str = ""
 
+    # Steam Web API key — enables vanity URL -> SteamID64 resolution.
+    # Obtain free at https://steamcommunity.com/dev/apikey. Empty = numeric IDs only.
+    steam_api_key: str = ""
+
 
 settings = Settings()
