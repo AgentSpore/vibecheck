@@ -1,0 +1,18 @@
+{
+  "name": "VibeCheck",
+  "short_name": "VibeCheck",
+  "description": "Vibe analysis from public social profiles",
+  "id": "/",
+  "start_url": "/?source=pwa",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#fef3e2",
+  "theme_color": "#ff5c8a",
+  "lang": "ru",
+  "dir": "ltr",
+  "categories": ["social", "entertainment", "lifestyle"],
+  "icons": [
+    { "src": "/static/icons/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ]
+}

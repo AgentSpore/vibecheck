@@ -46,6 +46,28 @@ async def share_page(share_id: str):  # noqa: ARG001 — share_id consumed clien
     return {"error": "static/share.html missing"}
 
 
+# PWA — service worker must live at origin root so its scope covers the whole app.
+@app.get("/sw.js")
+async def service_worker():
+    return FileResponse(
+        STATIC_DIR / "sw.js",
+        media_type="application/javascript",
+        headers={
+            "Cache-Control": "no-cache, no-store, must-revalidate",
+            "Service-Worker-Allowed": "/",
+        },
+    )
+
+
+@app.get("/manifest.webmanifest")
+async def manifest():
+    return FileResponse(
+        STATIC_DIR / "manifest.webmanifest",
+        media_type="application/manifest+json",
+        headers={"Cache-Control": "public, max-age=3600"},
+    )
+
+
 if STATIC_DIR.exists():
     app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
 

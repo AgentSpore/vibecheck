@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="VibeCheck">
+  <rect width="512" height="512" fill="#ff5c8a"/>
+  <g transform="translate(256 286)">
+    <text x="0" y="0" font-family="Georgia, 'Times New Roman', serif" font-weight="900" font-size="340" text-anchor="middle" dominant-baseline="middle" fill="#fef3e2">V</text>
+  </g>
+  <circle cx="418" cy="94" r="32" fill="#fef3e2"/>
+</svg>

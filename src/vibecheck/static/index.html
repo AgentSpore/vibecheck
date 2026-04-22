@@ -2,8 +2,21 @@
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>VibeCheck — вайб проверяется тут</title>
+
+<!-- PWA -->
+<link rel="manifest" href="/static/manifest.webmanifest">
+<meta name="theme-color" content="#ff5c8a">
+<meta name="application-name" content="VibeCheck">
+<meta name="description" content="Vibe analysis from public social profiles">
+<link rel="icon" type="image/svg+xml" href="/static/icons/icon.svg">
+<link rel="apple-touch-icon" href="/static/icons/icon.svg">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="VibeCheck">
+<meta name="mobile-web-app-capable" content="yes">
+
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Bagel+Fat+One&family=Funnel+Sans:wght@300..800&family=Caprasimo&display=swap" rel="stylesheet">
@@ -306,31 +319,6 @@
   }
   @keyframes fall {
     to { transform: translateY(100vh) rotate(720deg); opacity: 0; }
-  }
-</style>
-<!-- Telegram Mini App integration — preserves host app aesthetic -->
-<script src="https://telegram.org/js/telegram-web-app.js"></script>
-<style>
-  /* Only leaks into neutrals — app's signature palette stays dominant */
-  body.tg-webapp {
-    min-height: var(--tg-viewport-stable-height, 100dvh);
-    padding-top: env(safe-area-inset-top);
-    padding-bottom: env(safe-area-inset-bottom);
-    overflow-x: hidden;
-  }
-  body.tg-webapp ::-webkit-scrollbar { width: 6px; height: 6px; }
-  body.tg-webapp ::-webkit-scrollbar-thumb {
-    background: var(--tg-theme-hint-color, rgba(0,0,0,.2));
-    border-radius: 3px;
-  }
-  body.tg-webapp input::placeholder,
-  body.tg-webapp textarea::placeholder {
-    color: var(--tg-theme-hint-color, inherit);
-    opacity: 0.7;
-  }
-  /* Opt-in: any fixed header gets safe-area top padding when in TG */
-  body.tg-webapp [data-tg-header] {
-    padding-top: calc(env(safe-area-inset-top) + 12px);
   }
 </style>
 </head>
@@ -999,64 +987,120 @@ function escape(s) {
   return d.innerHTML;
 }
 </script>
+
+<!-- PWA: service worker + install prompt -->
+<style>
+  .pwa-install-banner {
+    position: fixed; left: 16px; right: 16px; bottom: 16px; z-index: 9999;
+    background: var(--paper); border: 3px solid var(--ink); box-shadow: var(--shadow-lg);
+    padding: 14px 16px; display: none; align-items: center; gap: 12px;
+    font-family: 'Funnel Sans', sans-serif; max-width: 480px; margin: 0 auto;
+  }
+  .pwa-install-banner.visible { display: flex; }
+  .pwa-install-banner .pwa-icon {
+    width: 44px; height: 44px; background: var(--coral); border: 2px solid var(--ink);
+    display: grid; place-items: center; font-family: 'Bagel Fat One'; font-size: 22px; color: var(--cream); flex-shrink: 0;
+  }
+  .pwa-install-banner .pwa-text { flex: 1; font-size: 13px; line-height: 1.35; }
+  .pwa-install-banner .pwa-text strong { display: block; font-family: 'Bagel Fat One'; font-size: 15px; margin-bottom: 2px; }
+  .pwa-install-banner button {
+    font-family: 'Funnel Sans', sans-serif; font-weight: 700; font-size: 12px;
+    background: var(--ink); color: var(--cream); border: 2px solid var(--ink);
+    padding: 8px 12px; cursor: pointer; box-shadow: 2px 2px 0 var(--coral);
+  }
+  .pwa-install-banner button.secondary { background: var(--cream); color: var(--ink); box-shadow: 2px 2px 0 var(--ink); }
+  .pwa-install-banner button:active { transform: translate(1px, 1px); box-shadow: 1px 1px 0 var(--coral); }
+</style>
+<div class="pwa-install-banner" id="pwaInstallBanner">
+  <div class="pwa-icon">V</div>
+  <div class="pwa-text">
+    <strong>Установи VibeCheck</strong>
+    <span id="pwaHint">Быстрее, офлайн-режим, иконка на экране.</span>
+  </div>
+  <button id="pwaInstallBtn">Поставить</button>
+  <button class="secondary" id="pwaDismissBtn" aria-label="Close">×</button>
+</div>
+
 <script>
-/* Telegram Mini App bootstrap — silent no-op outside Telegram */
-(function () {
-  const tg = window.Telegram && window.Telegram.WebApp;
-  if (!tg || !tg.initData) return;
+(function() {
+  // Register service worker
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', function() {
+      navigator.serviceWorker.register('/sw.js', { scope: '/' })
+        .then(function(reg) { console.log('[pwa] sw registered:', reg.scope); })
+        .catch(function(err) { console.warn('[pwa] sw failed:', err); });
+    });
+  }
 
-  document.body.classList.add('tg-webapp');
-  try { tg.ready(); } catch (_) {}
-  try { tg.expand(); } catch (_) {}
+  var banner = document.getElementById('pwaInstallBanner');
+  var installBtn = document.getElementById('pwaInstallBtn');
+  var dismissBtn = document.getElementById('pwaDismissBtn');
+  var hint = document.getElementById('pwaHint');
+  var deferred = null;
 
-  /* Stable viewport height — fixes iOS bounce + keyboard layout shift */
-  const syncHeight = () => {
-    const h = tg.viewportStableHeight || tg.viewportHeight || window.innerHeight;
-    document.documentElement.style.setProperty('--tg-viewport-stable-height', h + 'px');
-  };
-  syncHeight();
-  tg.onEvent && tg.onEvent('viewportChanged', syncHeight);
-  window.addEventListener('resize', syncHeight);
+  var DISMISS_KEY = 'vibecheck_pwa_dismissed_at';
+  var INSTALL_KEY = 'vibecheck_pwa_installed_at';
+  var DISMISS_DAYS = 7;
 
-  /* BackButton — shown on any hash route or deep-linked state. */
-  const back = tg.BackButton;
-  const updateBack = () => {
-    const hasRoute = location.hash && location.hash !== '#' && location.hash !== '#/';
-    (hasRoute || (history.state && history.state.__tgDeep)) ? back.show() : back.hide();
-  };
-  back.onClick(() => {
-    if (location.hash || (history.state && history.state.__tgDeep)) history.back();
-    else tg.close();
+  function recentlyDismissed() {
+    var v = localStorage.getItem(DISMISS_KEY);
+    if (!v) return false;
+    var ageDays = (Date.now() - Number(v)) / (1000 * 60 * 60 * 24);
+    return ageDays < DISMISS_DAYS;
+  }
+
+  function isStandalone() {
+    return window.matchMedia('(display-mode: standalone)').matches
+        || window.navigator.standalone === true;
+  }
+
+  function isIOS() {
+    return /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+  }
+
+  // Android/Chrome: beforeinstallprompt event
+  window.addEventListener('beforeinstallprompt', function(e) {
+    e.preventDefault();
+    deferred = e;
+    if (isStandalone() || recentlyDismissed()) return;
+    banner.classList.add('visible');
   });
-  window.addEventListener('hashchange', updateBack);
-  window.addEventListener('popstate', updateBack);
-  updateBack();
 
-  /* Haptics — window.tgHaptic('success'|'error'|'warning'|
-                                'light'|'medium'|'heavy'|'rigid'|'soft'|'tick') */
-  window.tgHaptic = function (kind) {
-    const hf = tg.HapticFeedback;
-    if (!hf) return;
-    try {
-      if (kind === 'success' || kind === 'error' || kind === 'warning') hf.notificationOccurred(kind);
-      else if (kind === 'light' || kind === 'medium' || kind === 'heavy' ||
-               kind === 'rigid' || kind === 'soft') hf.impactOccurred(kind);
-      else hf.selectionChanged();
-    } catch (_) {}
-  };
+  installBtn.addEventListener('click', function() {
+    if (!deferred) return;
+    deferred.prompt();
+    deferred.userChoice.then(function(choice) {
+      if (choice.outcome === 'accepted') {
+        localStorage.setItem(INSTALL_KEY, String(Date.now()));
+      } else {
+        localStorage.setItem(DISMISS_KEY, String(Date.now()));
+      }
+      banner.classList.remove('visible');
+      deferred = null;
+    });
+  });
 
-  /* Closing confirmation — call window.tgConfirmClose(true) when user has unsaved work */
-  window.tgConfirmClose = function (on) {
-    try { on ? tg.enableClosingConfirmation() : tg.disableClosingConfirmation(); } catch (_) {}
-  };
+  dismissBtn.addEventListener('click', function() {
+    localStorage.setItem(DISMISS_KEY, String(Date.now()));
+    banner.classList.remove('visible');
+  });
 
-  /* Expose user + signed initData for backend HMAC verification */
-  window.tgUser = (tg.initDataUnsafe && tg.initDataUnsafe.user) || null;
-  window.tgInitData = tg.initData;
+  window.addEventListener('appinstalled', function() {
+    localStorage.setItem(INSTALL_KEY, String(Date.now()));
+    banner.classList.remove('visible');
+  });
 
-  document.dispatchEvent(new CustomEvent('tg:ready', {
-    detail: { tg: tg, user: window.tgUser, platform: tg.platform, colorScheme: tg.colorScheme }
-  }));
+  // iOS: no beforeinstallprompt, show manual hint
+  if (isIOS() && !isStandalone() && !recentlyDismissed()) {
+    setTimeout(function() {
+      installBtn.textContent = 'Как поставить';
+      hint.textContent = 'Нажми Поделиться → «На экран Домой».';
+      banner.classList.add('visible');
+      installBtn.onclick = function() {
+        alert('iPhone: внизу Safari нажми кнопку Поделиться (квадрат со стрелкой) и выбери «На экран Домой».');
+      };
+    }, 2500);
+  }
 })();
 </script>
 </body>
